@@ -5,6 +5,7 @@ import "98.css";
 interface Window98Props {
 	title: string;
 	children: React.ReactNode;
+	iconUrl?: string;
 	initialPosition?: { top: number; left: number };
 	initialSize?: { width: number; height: number };
 	minWidth?: number;
@@ -17,6 +18,7 @@ interface Window98Props {
 export default function Window98({
 	title,
 	children,
+	iconUrl,
 	initialPosition = { top: 100, left: 100 },
 	initialSize = { width: 500, height: 300 },
 	minWidth = 300,
@@ -288,17 +290,22 @@ export default function Window98({
 				style={{ cursor: "move" }}
 				onMouseDown={onMouseDown}
 			>
-				<div className="title-bar-text">{title}</div>
+				<div className="title-bar-text" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+					{iconUrl && (
+						<img src={iconUrl} alt="window icon" style={{ width: 16, height: 16, marginRight: 4, display: 'inline-block' }} />
+					)}
+					{title}
+				</div>
 				<div className="title-bar-controls">
 					<button
-						aria-label="最小化"
+						aria-label="Minimize"
 						onClick={() => setMinimized(true)}
 					></button>
 					<button
-						aria-label="最大化"
+						aria-label="Maximize"
 						onClick={() => setMaximized((m) => !m)}
 					></button>
-					<button aria-label="关闭" onClick={onClose}></button>
+					<button aria-label="Close" onClick={onClose}></button>
 				</div>
 			</div>
 			{!minimized && !maximized && (

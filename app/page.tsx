@@ -2,8 +2,15 @@
 import "98.css";
 import React, { useState } from "react";
 import Window98 from "./components/Window98";
-import ChapterCrud from "./components/crud/ChapterWindows";
+import ChapterWindows from "./components/windows/ChapterWindows";
 import Image from "next/image";
+import AboutWindows from "./components/windows/AboutWindows";
+import WorkWindows from "./components/windows/WorkWindows";
+import EventWindows from "./components/windows/EventWindows";
+import CharacterWindows from "./components/windows/CharacterWindows";
+import RelationshipWindows from "./components/windows/RelationshipWindows";
+import WorldviewWindows from "./components/windows/WorldviewWindows";
+import TimelineWindows from "./components/windows/TimelineWindows";
 
 export default function Home() {
 	const [openWindows, setOpenWindows] = useState<
@@ -72,26 +79,27 @@ export default function Home() {
 					title={
 						iconConfigs.find((c) => c.type === win.type)?.label || win.type
 					}
+					iconUrl={iconConfigs.find((c) => c.type === win.type)?.icon}
 					onClose={() => handleClose(win.id)}
 				>
 					{(() => {
 						switch (win.type) {
 							case "work":
-								return <div>作品管理 CRUD 占位</div>;
+								return <WorkWindows />;
 							case "chapter":
-								return <ChapterCrud />;
+								return <ChapterWindows />;
 							case "event":
-								return <div>事件管理 CRUD 占位</div>;
+								return <EventWindows />;
 							case "character":
-								return <div>角色管理 CRUD 占位</div>;
+								return <CharacterWindows />;
 							case "relation":
-								return <div>角色关系 CRUD 占位</div>;
+								return <RelationshipWindows />;
 							case "world":
-								return <div>世界观信息 CRUD 占位</div>;
+								return <WorldviewWindows />;
 							case "timeline":
-								return <div>时间线 CRUD 占位</div>;
+								return <TimelineWindows />;
 							case "about":
-								return <div>关于 CRUD 占位</div>;
+								return <AboutWindows />;
 							default:
 								return <div>未知窗口</div>;
 						}
