@@ -59,15 +59,12 @@ export default function EventWindows() {
 	};
 
 	return (
-		<div
-			className="window-body"
-			style={{ minHeight: 350, display: "flex", flexDirection: "column" }}
-		>
+		<div className="window-content">
 			<h3>事件管理</h3>
 
-			<div style={{ display: "flex", gap: 24, flexGrow: 1 }}>
+			<div className="window-content-row">
 				{/* 左侧：事件表单 */}
-				<div style={{ flex: "0 0 40%" }}>
+				<div className="window-content-col window-content-left">
 					{editingEvent ? (
 						<EventForm
 							event={editingEvent}
@@ -80,7 +77,7 @@ export default function EventWindows() {
 				</div>
 
 				{/* 右侧：事件列表 */}
-				<div style={{ flex: "0 0 60%" }}>
+				<div className="window-content-col window-content-right">
 					<EventList
 						events={events}
 						onEdit={handleEdit}

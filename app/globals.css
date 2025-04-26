@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
+@import "tailwindcss/preflight";
+@tailwind utilities;
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+	--background: #ffffff;
+	--foreground: #171717;
+	--foreground-rgb: 0, 0, 0;
+	--background-rgb: 0, 120, 120;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+	:root {
+		--background: #0a0a0a;
+		--foreground: #ededed;
+	}
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: "Pixelated MS Sans Serif", Arial, sans-serif;
+	color: rgb(var(--foreground-rgb));
+	background-color: rgb(var(--background-rgb));
+}
+
+.window-content-left {
+	flex: 0 0 40%;
+}
+
+.window-content-right {
+	flex: 0 0 60%;
+}
+
+/* 任务栏样式 */
+.taskbar {
+	display: flex;
+	height: 28px;
+	background-color: #c0c0c0;
+	box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #0a0a0a;
+	padding: 2px;
+}
+
+/* 任务栏按钮样式 */
+.taskbar .window-button {
+	background-color: #c0c0c0;
+	box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #0a0a0a;
+	transition: all 0.1s;
+}
+
+/* 活动按钮样式 */
+.taskbar .window-button.active {
+	background-color: #d4d0c8;
+	box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px #0a0a0a;
+}
+
+/* 最小化按钮样式 */
+.taskbar .window-button.minimized {
+	background-color: #c0c0c0;
+	opacity: 0.85;
+}
+
+/* 开始菜单样式 */
+.start-menu {
+	box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #0a0a0a,
+		2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* 菜单项悬停效果 */
+.menu-item.hover {
+	background-color: #000080;
+	color: white;
+}
+
+/* 桌面图标区域 */
+.desktop {
+	background-color: teal;
 }

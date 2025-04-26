@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import "98.css";
+import { useProcessStore } from "../store/process";
 
 interface Window98Props {
 	title: string;
@@ -13,6 +14,7 @@ interface Window98Props {
 	maxWidth?: number;
 	maxHeight?: number;
 	onClose?: () => void;
+	windowType?: string; // 窗口类型，用于匹配任务栏进程
 }
 
 // 为所有窗口设置一个全局计数器，用于管理z-index
@@ -29,6 +31,7 @@ export default function Window98({
 	maxWidth = 1200,
 	maxHeight = 900,
 	onClose,
+	windowType,
 }: Window98Props) {
 	const [minimized, setMinimized] = useState(false);
 	const [maximized, setMaximized] = useState(false);
@@ -49,6 +52,13 @@ export default function Window98({
 	const [zIndex, setZIndex] = useState(globalZIndexCounter);
 	// 添加音频引用
 	const clickSoundRef = useRef<HTMLAudioElement | null>(null);
+	// 使用进程管理store
+	const { updateProcessState } = useProcessStore();
+
+	// 调试信息：窗口初始化
+	useEffect(() => {
+		console.log(`窗口初始化: title=${title}, type=${windowType}`);
+	}, [title, windowType]);
 
 	// 初始化音频
 	useEffect(() => {
@@ -64,6 +74,89 @@ export default function Window98({
 				.catch((err) => console.error("音频播放失败:", err));
 		}
 	};
+
+	// 从任务栏恢复窗口的事件监听
+	useEffect(() => {
+		// 监听restoreWindow事件
+		const handleRestoreWindow = (e: Event) => {
+			try {
+				const event = e as CustomEvent;
+				const { windowName, windowType: eventWindowType } = event.detail;
+
+				console.log("收到恢复窗口事件:", {
+					windowName,
+					eventWindowType,
+					currentTitle: title,
+					currentType: windowType,
+					isMinimized: minimized,
+				});
+
+				// 通过名称或类型匹配窗口
+				const isMatchedWindow =
+					windowName === title ||
+					(windowType && eventWindowType && windowType === eventWindowType);
+
+				console.log("窗口匹配结果:", isMatchedWindow);
+
+				// 如果当前窗口是事件目标窗口且处于最小化状态，则恢复窗口
+				if (isMatchedWindow && minimized) {
+					console.log("正在恢复窗口:", title, windowType);
+					setMinimized(false);
+					bringToFront();
+					playClickSound();
+				}
+			} catch (error) {
+				console.error("恢复窗口事件处理错误:", error);
+			}
+		};
+
+		// 监听bringToFront事件
+		const handleBringToFront = (e: Event) => {
+			try {
+				const event = e as CustomEvent;
+				const { windowName, windowType: eventWindowType } = event.detail;
+
+				console.log("收到窗口置前事件:", {
+					windowName,
+					eventWindowType,
+					currentTitle: title,
+					currentType: windowType,
+				});
+
+				// 通过名称或类型匹配窗口
+				const isMatchedWindow =
+					windowName === title ||
+					(windowType && eventWindowType && windowType === eventWindowType);
+
+				console.log("窗口匹配结果:", isMatchedWindow);
+
+				// 如果当前窗口是事件目标窗口，则置前
+				if (isMatchedWindow) {
+					console.log("正在置前窗口:", title, windowType);
+					bringToFront();
+					playClickSound();
+				}
+			} catch (error) {
+				console.error("窗口置前事件处理错误:", error);
+			}
+		};
+
+		// 添加调试日志
+		console.log(
+			`设置窗口事件监听: title=${title}, type=${windowType}, minimized=${minimized}`
+		);
+
+		// 添加事件监听
+		window.addEventListener("restoreWindow", handleRestoreWindow);
+		window.addEventListener("bringToFront", handleBringToFront);
+
+		// 清理函数
+		return () => {
+			console.log(`移除窗口事件监听: title=${title}, type=${windowType}`);
+			window.removeEventListener("restoreWindow", handleRestoreWindow);
+			window.removeEventListener("bringToFront", handleBringToFront);
+		};
+	}, [title, minimized, windowType]);
 
 	// 处理窗口置顶
 	const bringToFront = () => {
@@ -114,7 +207,6 @@ export default function Window98({
 			startT: position.top,
 		});
 		document.body.style.userSelect = "none";
-		e.stopPropagation();
 	};
 	const onResizeMouseMove = (e: MouseEvent) => {
 		if (!resizing) return;
@@ -198,23 +290,34 @@ export default function Window98({
 	// 窗口点击时提升z-index
 	const handleWindowClick = () => {
 		bringToFront();
+		// 更新进程状态为活动
+		updateProcessState(title, "normal");
 	};
 
 	// 处理最小化
 	const handleMinimize = () => {
+		console.log("窗口最小化:", title, windowType);
 		playClickSound();
 		setMinimized(true);
+		// 更新进程状态为最小化
+		updateProcessState(title, "minimize");
 	};
 
 	// 处理最大化
 	const handleMaximize = () => {
+		console.log("窗口最大化/恢复:", title, windowType, !maximized);
 		playClickSound();
 		setMaximized((m) => !m);
+		// 更新进程状态
+		updateProcessState(title, maximized ? "normal" : "maximize");
 	};
 
 	// 处理关闭
 	const handleClose = () => {
+		console.log("窗口关闭:", title, windowType);
 		playClickSound();
+		// 更新进程状态为关闭
+		updateProcessState(title, "close");
 		if (onClose) onClose();
 	};
 
@@ -329,7 +432,7 @@ export default function Window98({
 				left: maximized ? 0 : position.left,
 				top: maximized ? 0 : position.top,
 				width: maximized ? "100%" : size.width,
-				height: maximized ? "100vh" : minimized ? 36 : size.height,
+				height: maximized ? "100vh" : size.height,
 				zIndex, // 使用zIndex状态
 				display: minimized ? "none" : undefined,
 				// 在最大化状态下不限制窗口尺寸
@@ -371,14 +474,35 @@ export default function Window98({
 				</div>
 			</div>
 			{!minimized && !maximized && (
-				<div className="window-body">{children}</div>
+				<div
+					className="window-body"
+					style={{
+						height: `calc(${size.height}px - 36px)`,
+						overflow: "auto",
+						display: "flex",
+						flexDirection: "column",
+						padding: 0,
+					}}
+				>
+					<div style={{ flex: 1, overflow: "auto", padding: "8px" }}>
+						{children}
+					</div>
+				</div>
 			)}
 			{maximized && !minimized && (
 				<div
 					className="window-body"
-					style={{ height: "calc(100vh - 36px)", overflow: "auto" }}
+					style={{
+						height: "calc(100vh - 36px)",
+						overflow: "auto",
+						display: "flex",
+						flexDirection: "column",
+						padding: 0,
+					}}
 				>
-					{children}
+					<div style={{ flex: 1, overflow: "auto", padding: "8px" }}>
+						{children}
+					</div>
 				</div>
 			)}
 			{/* 八向缩放拖拽点 */}

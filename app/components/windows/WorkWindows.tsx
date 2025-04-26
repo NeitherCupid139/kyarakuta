@@ -59,7 +59,7 @@ export default function WorkWindows() {
 	};
 
 	return (
-		<div className="window-body" style={{ minHeight: 350 }}>
+		<div className="window-body">
 			<h3>作品列表</h3>
 
 			{/* 作品列表 */}

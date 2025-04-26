@@ -103,13 +103,25 @@ export default function CharacterWindows() {
 	return (
 		<div
 			className="window-body"
-			style={{ minHeight: 350, display: "flex", flexDirection: "column" }}
+			style={{
+				height: "100%",
+				display: "flex",
+				flexDirection: "column",
+				overflow: "auto",
+			}}
 		>
 			<h3>角色管理</h3>
 
-			<div style={{ display: "flex", gap: 24, flexGrow: 1 }}>
+			<div
+				style={{
+					display: "flex",
+					gap: "24px",
+					flexGrow: 1,
+					overflow: "hidden",
+				}}
+			>
 				{/* 左侧：角色表单 */}
-				<div style={{ flex: "0 0 40%" }}>
+				<div style={{ flex: "0 0 40%", overflow: "auto" }}>
 					{editingCharacter ? (
 						<CharacterForm
 							character={editingCharacter}
@@ -122,7 +134,7 @@ export default function CharacterWindows() {
 				</div>
 
 				{/* 右侧：角色列表 */}
-				<div style={{ flex: "0 0 60%" }}>
+				<div style={{ flex: "0 0 60%", overflow: "auto" }}>
 					<CharacterList
 						characters={characters}
 						onEdit={handleEdit}

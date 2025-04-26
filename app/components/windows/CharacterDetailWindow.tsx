@@ -65,8 +65,8 @@ export default function CharacterDetailWindow({
 	// 如果角色不存在
 	if (!character) {
 		return (
-			<div className="window-body">
-				<div className="status-bar" style={{ padding: 16 }}>
+			<div className="window-body" style={{ padding: "16px" }}>
+				<div className="status-bar">
 					<p className="status-bar-field">未找到角色数据</p>
 					<button className="button" onClick={onBack}>
 						返回列表
@@ -77,11 +77,14 @@ export default function CharacterDetailWindow({
 	}
 
 	return (
-		<div className="window-body" style={{ padding: 16, overflow: "auto" }}>
+		<div
+			className="window-body"
+			style={{ padding: "16px", height: "100%", overflow: "auto" }}
+		>
 			{/* 标题栏 */}
 			<div
 				className="title-bar-text"
-				style={{ fontSize: 20, marginBottom: 16 }}
+				style={{ fontSize: "20px", marginBottom: "16px" }}
 			>
 				{isEditing ? "编辑角色" : "角色详情"}
 			</div>
@@ -89,17 +92,12 @@ export default function CharacterDetailWindow({
 			{/* 内容区 */}
 			{isEditing ? (
 				// 编辑表单
-				<div className="window" style={{ width: "100%" }}>
-					<div className="title-bar">
-						<div className="title-bar-text">编辑 - {character.name}</div>
-					</div>
-					<div className="window-body" style={{ padding: 16 }}>
-						<CharacterForm
-							character={character}
-							onSubmit={handleSave}
-							onCancel={handleCancel}
-						/>
-					</div>
+				<div style={{ width: "100%" }}>
+					<CharacterForm
+						character={character}
+						onSubmit={handleSave}
+						onCancel={handleCancel}
+					/>
 				</div>
 			) : (
 				// 角色详情
