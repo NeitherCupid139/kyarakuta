@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 定义地图元素接口
 interface MapElement {
@@ -69,6 +70,19 @@ export default function MapWindows({
 	// 拖拽状态
 	const [draggingElement, setDraggingElement] = useState<string | null>(null);
 	const dragOffset = useRef({ x: 0, y: 0 });
+
+	// 拖拽全局 mouseup 监听
+	useEffect(() => {
+		if (!draggingElement) return;
+		const handleMouseUp = () => {
+			setDraggingElement(null);
+			setIsPanning(false);
+		};
+		window.addEventListener("mouseup", handleMouseUp);
+		return () => {
+			window.removeEventListener("mouseup", handleMouseUp);
+		};
+	}, [draggingElement]);
 
 	// 地图缩放和平移状态
 	const [scale, setScale] = useState(1);
@@ -143,8 +157,17 @@ export default function MapWindows({
 	};
 
 	// 删除保存的地图
-	const deleteMap = (id: string) => {
-		if (window.confirm("确定要删除此地图吗？此操作不可撤销。")) {
+	const deleteMap = async (id: string) => {
+		// 使用Modal.confirm替代window.confirm
+		const confirmed = await Modal.confirm(
+			"确定要删除此地图吗？此操作不可撤销。",
+			{
+				title: "删除地图",
+				icon: "/icons/delete.png",
+			}
+		);
+
+		if (confirmed) {
 			const updatedMaps = savedMaps.filter((m) => m.id !== id);
 			localStorage.setItem("savedMaps", JSON.stringify(updatedMaps));
 			setSavedMaps(updatedMaps);
@@ -692,21 +715,44 @@ export default function MapWindows({
 
 	// 地图预览对话框
 	const PreviewDialog = () => {
-		// 计算地图边界
 		const mapWidth = mapData.size.width;
 		const mapHeight = mapData.size.height;
 
-		// 根据容器大小自动调整预览图比例
-		const containerWidth = 600;
-		const containerHeight = 450;
+		// 动态获取父窗口可用宽高
+		const [containerSize, setContainerSize] = useState({
+			width: 600,
+			height: 450,
+		});
+		const dialogRef = useRef<HTMLDivElement>(null);
+
+		useEffect(() => {
+			function updateSize() {
+				if (dialogRef.current) {
+					const maxW = window.innerWidth - 120;
+					const maxH = window.innerHeight - 120;
+					setContainerSize({
+						width: Math.max(320, Math.min(maxW, 800)),
+						height: Math.max(240, Math.min(maxH, 600)),
+					});
+				}
+			}
+			updateSize();
+			window.addEventListener("resize", updateSize);
+			return () => window.removeEventListener("resize", updateSize);
+		}, []);
+
 		const previewScale = Math.min(
-			containerWidth / mapWidth,
-			containerHeight / mapHeight
+			containerSize.width / mapWidth,
+			containerSize.height / mapHeight
 		);
 
 		return (
 			<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-				<div className="window" style={{ width: containerWidth + 50 }}>
+				<div
+					className="window"
+					ref={dialogRef}
+					style={{ width: containerSize.width + 50 }}
+				>
 					<div className="title-bar">
 						<div className="title-bar-text">地图预览 - {mapData.name}</div>
 						<div className="title-bar-controls">
@@ -726,10 +772,13 @@ export default function MapWindows({
 
 						{/* 地图预览区 */}
 						<div
-							className="border relative mx-auto overflow-hidden"
+							className="border relative mx-auto overflow-auto"
 							style={{
-								width: Math.min(mapWidth * previewScale, containerWidth),
-								height: Math.min(mapHeight * previewScale, containerHeight),
+								width: Math.min(mapWidth * previewScale, containerSize.width),
+								height: Math.min(
+									mapHeight * previewScale,
+									containerSize.height
+								),
 								backgroundColor: "#f8f9fa",
 							}}
 						>
@@ -814,9 +863,9 @@ export default function MapWindows({
 			className="window-body"
 			style={{
 				height: "100%",
-				overflow: "auto",
 				display: "flex",
 				flexDirection: "column",
+				padding: 0,
 			}}
 		>
 			{/* 保存对话框 */}
@@ -838,15 +887,27 @@ export default function MapWindows({
 					overflow: "hidden",
 					border: "1px solid #000",
 					margin: "10px 0",
-					flex: "1 1 auto",
+					flex: 1,
 					background: "#f0f0f0",
+					minHeight: 320,
 				}}
 			>
 				<MapGrid />
 			</div>
 
-			{/* 元素详情面板 */}
-			{selectedElement && <ElementDetailPanel />}
+			{/* 元素详情面板固定底部（98.css风格） */}
+			{selectedElement && (
+				<div
+					style={{
+						borderTop: "1px solid #bdbdbd",
+						background: "#fff",
+						boxShadow: "0 -2px 6px #e1e1e1",
+						zIndex: 10,
+					}}
+				>
+					<ElementDetailPanel />
+				</div>
+			)}
 		</div>
 	);
 }

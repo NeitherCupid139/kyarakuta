@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useProcessStore } from "@/app/store/process";
 import { useState, useEffect, useRef } from "react";
 import { useSplashStore } from "@/app/lib/splashStore";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 export default function Navbar() {
 	// 从进程存储中获取状态和方法
@@ -63,12 +64,17 @@ export default function Navbar() {
 	}, []);
 
 	// 处理关机按钮点击
-	const handleShutdown = () => {
+	const handleShutdown = async () => {
 		// 播放点击音效
 		playClickSound();
 
 		// 显示确认对话框
-		if (window.confirm("确定要关闭系统吗？")) {
+		const confirmed = await Modal.confirm("确定要关闭系统吗？", {
+			title: "系统关机",
+			icon: "/icons/shutdown.png",
+		});
+
+		if (confirmed) {
 			// 重置开机动画状态
 			resetSplashState();
 			// 刷新页面触发开机动画

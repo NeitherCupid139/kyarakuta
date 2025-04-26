@@ -1,5 +1,6 @@
 import React from "react";
 import { TimelineItem } from "./TimelineForm";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 列表属性定义
 interface TimelineListProps {
@@ -43,6 +44,22 @@ export default function TimelineList({
 		// 如果都没有 order，按 id（添加顺序）排序
 		return a.id - b.id;
 	});
+
+	// 处理事件删除
+	const handleDeleteTimelineItem = async (item: TimelineItem) => {
+		// 二次确认删除
+		const confirmed = await Modal.confirm(
+			`确定要删除时间线事件"${item.event}"吗？`,
+			{
+				title: "删除时间线事件",
+				icon: "/icons/delete.png",
+			}
+		);
+
+		if (confirmed) {
+			onDelete(item.id);
+		}
+	};
 
 	return (
 		<div className="timeline-list">
@@ -119,16 +136,7 @@ export default function TimelineList({
 										<button
 											className="button"
 											style={{ marginLeft: 4 }}
-											onClick={() => {
-												// 二次确认删除
-												if (
-													window.confirm(
-														`确定要删除时间线事件"${item.event}"吗？`
-													)
-												) {
-													onDelete(item.id);
-												}
-											}}
+											onClick={() => handleDeleteTimelineItem(item)}
 										>
 											删除
 										</button>

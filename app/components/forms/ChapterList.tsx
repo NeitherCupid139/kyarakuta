@@ -1,5 +1,6 @@
 import React from "react";
 import { Chapter } from "./ChapterForm";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 列表属性定义
 interface ChapterListProps {
@@ -28,6 +29,22 @@ export default function ChapterList({
 			</div>
 		);
 	}
+
+	// 处理章节删除
+	const handleDeleteChapter = async (chapter: Chapter) => {
+		// 二次确认删除
+		const confirmed = await Modal.confirm(
+			`确定要删除章节"${chapter.title}"吗？`,
+			{
+				title: "删除章节",
+				icon: "/icons/delete.png",
+			}
+		);
+
+		if (confirmed) {
+			onDelete(chapter.id);
+		}
+	};
 
 	return (
 		<div className="chapter-list">
@@ -61,14 +78,7 @@ export default function ChapterList({
 								<button
 									className="button"
 									style={{ marginLeft: 8 }}
-									onClick={() => {
-										// 二次确认删除
-										if (
-											window.confirm(`确定要删除章节"${chapter.title}"吗？`)
-										) {
-											onDelete(chapter.id);
-										}
-									}}
+									onClick={() => handleDeleteChapter(chapter)}
 								>
 									删除
 								</button>

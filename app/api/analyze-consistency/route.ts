@@ -3,14 +3,8 @@ import { analyzeChapterConsistency } from "@/app/lib/ai";
 export async function POST(req: Request) {
 	try {
 		// 解析请求体
-		const {
-			chapterId,
-			chapterTitle,
-			chapterContent,
-			worldviewInfo,
-			previousChaptersContext,
-			customPrompt,
-		} = await req.json();
+		const { chapterContent, worldviewInfo, previousChaptersContext } =
+			await req.json();
 
 		// 参数验证
 		if (!chapterContent) {
@@ -19,19 +13,6 @@ export async function POST(req: Request) {
 				headers: { "Content-Type": "application/json" },
 			});
 		}
-
-		// 构建分析上下文
-		const analysisContext = `
-      章节标题: ${chapterTitle || "无标题"}
-      
-      ${customPrompt ? `特殊分析要求: ${customPrompt}\n\n` : ""}
-      
-      世界观信息:
-      ${worldviewInfo || "无特定世界观信息"}
-      
-      前后章节上下文:
-      ${previousChaptersContext || "无前后章节上下文"}
-    `;
 
 		// 调用AI分析函数
 		const analysisResult = await analyzeChapterConsistency(

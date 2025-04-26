@@ -1,10 +1,11 @@
-import { Message as AIMessage, StreamingTextResponse, streamText } from "ai";
+import { Message as AIMessage } from "ai";
+import { streamText } from "ai";
 import { createZhipu, zhipu } from "zhipu-ai-provider";
 
-// 声明模块
-declare module "ai" {
-	export class StreamingTextResponse extends Response {
-		constructor(stream: ReadableStream);
+// 声明自定义Response类，使用Web标准的ReadableStream
+class StreamingTextResponse extends Response {
+	constructor(stream: ReadableStream) {
+		super(stream);
 	}
 }
 

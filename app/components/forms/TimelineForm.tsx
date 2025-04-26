@@ -8,6 +8,7 @@ export interface TimelineItem {
 	time: string;
 	event: string;
 	description: string;
+	order?: number;
 }
 
 /**

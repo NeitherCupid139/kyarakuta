@@ -125,7 +125,10 @@ const AttributeItem = ({
 
 	return (
 		<div
-			ref={(node) => drag(drop(node))}
+			ref={(node) => {
+				drag(node);
+				drop(node);
+			}}
 			className={`window p-2 mb-2 cursor-move ${
 				isDragging ? "opacity-50" : ""
 			}`}
@@ -376,7 +379,7 @@ export default function CustomAttributeEditor({
 					<div>
 						{attributes.length === 0 ? (
 							<div className="p-4 text-center">
-								没有属性，点击"添加属性"开始创建
+								没有属性，点击&quot;添加属性&quot;开始创建
 							</div>
 						) : (
 							attributes.map((attribute, index) => (

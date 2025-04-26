@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import "98.css";
-import Image from "next/image";
 
 // 弹跳图片组件
 function BouncingImage() {
@@ -13,8 +12,8 @@ function BouncingImage() {
 	useEffect(() => {
 		const interval = setInterval(() => {
 			setPosition((prev) => {
-				let newX = prev.x + direction.x * speed;
-				let newY = prev.y + direction.y * speed;
+				const newX = prev.x + direction.x * speed;
+				const newY = prev.y + direction.y * speed;
 				let newDirX = direction.x;
 				let newDirY = direction.y;
 
@@ -57,7 +56,7 @@ function BouncingImage() {
 				}}
 			>
 				<img
-					src="/icons/win98.png"
+					src="/icons/myfriend.png"
 					alt="Windows 98 Logo"
 					width={48}
 					height={48}
@@ -140,20 +139,6 @@ export default function AboutWindows() {
 					</div>
 				</div>
 
-				{/* 作者介绍 */}
-				<div className="field-row-stacked mb-4">
-					<label>关于作者</label>
-					<div className="sunken-panel p-2">
-						<p className="mb-2">
-							我是一名热爱创作的作家和程序员，专注于小说、剧本和交互式叙事创作。
-						</p>
-						<p className="mb-2">
-							通过这个工具，我希望能帮助其他创作者更好地组织他们的创作素材和角色关系。
-						</p>
-						<p>喜欢科幻、奇幻题材，特别关注角色成长和世界构建。</p>
-					</div>
-				</div>
-
 				{/* 功能列表 */}
 				<div className="field-row-stacked mb-4">
 					<label>主要功能</label>
@@ -168,53 +153,9 @@ export default function AboutWindows() {
 					</div>
 				</div>
 
-				{/* 联系方式 */}
-				<div className="field-row-stacked">
-					<label>联系方式</label>
-					<div className="sunken-panel p-2">
-						<div className="mb-2 flex items-center">
-							<img
-								src="/icons/phone.png"
-								alt="Email"
-								className="mr-2"
-								width={16}
-								height={16}
-							/>
-							<span>example@kyarakuta.com</span>
-						</div>
-						<div className="mb-2 flex items-center">
-							<img
-								src="/icons/chat.png"
-								alt="微信"
-								className="mr-2"
-								width={16}
-								height={16}
-							/>
-							<span>Kyarakuta_Creator</span>
-						</div>
-						<div className="flex items-center">
-							<img
-								src="/icons/globe.svg"
-								alt="GitHub"
-								className="mr-2"
-								width={16}
-								height={16}
-							/>
-							<a
-								href="https://github.com/kyarakuta"
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-blue-800 hover:underline"
-							>
-								github.com/kyarakuta
-							</a>
-						</div>
-					</div>
-				</div>
-
 				{/* 版权信息 */}
 				<div className="mt-6 text-center text-xs text-gray-600">
-					© 2023 角色管理工具 | 保留所有权利
+					© 2025 Kyarakuta | 保留所有权利
 				</div>
 			</div>
 		</div>

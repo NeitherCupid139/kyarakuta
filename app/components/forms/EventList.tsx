@@ -1,5 +1,6 @@
 import React from "react";
 import { Event } from "./EventForm";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 列表属性定义
 interface EventListProps {
@@ -29,6 +30,19 @@ export default function EventList({
 		);
 	}
 
+	// 处理事件删除
+	const handleDeleteEvent = async (event: Event) => {
+		// 二次确认删除
+		const confirmed = await Modal.confirm(`确定要删除事件"${event.name}"吗？`, {
+			title: "删除事件",
+			icon: "/icons/delete.png",
+		});
+
+		if (confirmed) {
+			onDelete(event.id);
+		}
+	};
+
 	return (
 		<div className="event-list">
 			<h4>事件列表</h4>
@@ -56,12 +70,7 @@ export default function EventList({
 									<button
 										className="button"
 										style={{ marginLeft: 4 }}
-										onClick={() => {
-											// 二次确认删除
-											if (window.confirm(`确定要删除事件"${event.name}"吗？`)) {
-												onDelete(event.id);
-											}
-										}}
+										onClick={() => handleDeleteEvent(event)}
 									>
 										删除
 									</button>

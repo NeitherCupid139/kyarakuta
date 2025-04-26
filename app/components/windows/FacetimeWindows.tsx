@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Window98 from "@/app/components/Window98";
 import Image from "next/image";
 
 export default function FacetimeWindows() {
 	const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 	const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-	const [isConnected, setIsConnected] = useState(false);
 	const [isCameraOn, setIsCameraOn] = useState(true);
 	const [isMicOn, setIsMicOn] = useState(true);
 	const [myPeerId] = useState(() => Math.random().toString(36).substr(2, 9));
@@ -73,7 +71,6 @@ export default function FacetimeWindows() {
 		peerConnection.current?.close();
 		setRemoteStream(null);
 		setIsCallInProgress(false);
-		setIsConnected(false);
 	};
 
 	// 切换摄像头

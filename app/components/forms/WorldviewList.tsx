@@ -1,5 +1,6 @@
 import React from "react";
 import { Worldview } from "./WorldviewForm";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 列表属性定义
 interface WorldviewListProps {
@@ -30,6 +31,22 @@ export default function WorldviewList({
 			</div>
 		);
 	}
+
+	// 处理世界观删除
+	const handleDeleteWorldview = async (worldview: Worldview) => {
+		// 二次确认删除
+		const confirmed = await Modal.confirm(
+			`确定要删除世界观"${worldview.title}"吗？`,
+			{
+				title: "删除世界观",
+				icon: "/icons/delete.png",
+			}
+		);
+
+		if (confirmed) {
+			onDelete(worldview.id);
+		}
+	};
 
 	return (
 		<div className="worldview-list">
@@ -76,14 +93,7 @@ export default function WorldviewList({
 								<button
 									className="button"
 									style={{ marginLeft: 4 }}
-									onClick={() => {
-										// 二次确认删除
-										if (
-											window.confirm(`确定要删除世界观"${worldview.title}"吗？`)
-										) {
-											onDelete(worldview.id);
-										}
-									}}
+									onClick={() => handleDeleteWorldview(worldview)}
 								>
 									删除
 								</button>

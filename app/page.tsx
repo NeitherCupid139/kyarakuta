@@ -24,6 +24,7 @@ import AlbumWindows from "./components/windows/AlbumWindows";
 import FacetimeWindows from "./components/windows/FacetimeWindows";
 import Navbar from "./components/Navbar";
 import { useProcessStore } from "./store/process";
+import ModalWindows from "./components/windows/ModalWindows";
 
 export default function Home() {
 	// 使用Zustand store
@@ -294,6 +295,9 @@ export default function Home() {
 			className="desktop min-h-screen min-w-screen relative"
 			style={{ background: "#008080", padding: 0 }}
 		>
+			{/* 添加 ModalWindows 组件 */}
+			<ModalWindows />
+
 			{/* 桌面图标区 */}
 			{/* 自动换列 */}
 			<div

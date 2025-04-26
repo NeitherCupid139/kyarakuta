@@ -1,5 +1,6 @@
 import React from "react";
 import { Relationship, relationTypeLabels } from "./RelationshipForm";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 列表属性定义
 interface RelationshipListProps {
@@ -28,6 +29,22 @@ export default function RelationshipList({
 			</div>
 		);
 	}
+
+	// 处理关系删除
+	const handleDeleteRelationship = async (rel: Relationship) => {
+		// 二次确认删除
+		const confirmed = await Modal.confirm(
+			`确定要删除 "${rel.character1Name}" 和 "${rel.character2Name}" 之间的关系吗？`,
+			{
+				title: "删除角色关系",
+				icon: "/icons/delete.png",
+			}
+		);
+
+		if (confirmed) {
+			onDelete(rel.id);
+		}
+	};
 
 	return (
 		<div className="relationship-list">
@@ -74,16 +91,7 @@ export default function RelationshipList({
 									<button
 										className="button"
 										style={{ marginLeft: 4 }}
-										onClick={() => {
-											// 二次确认删除
-											if (
-												window.confirm(
-													`确定要删除 "${rel.character1Name}" 和 "${rel.character2Name}" 之间的关系吗？`
-												)
-											) {
-												onDelete(rel.id);
-											}
-										}}
+										onClick={() => handleDeleteRelationship(rel)}
 									>
 										删除
 									</button>

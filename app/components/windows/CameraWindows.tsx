@@ -15,6 +15,39 @@ const CameraView: React.FC<{
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
+	// Floyd–Steinberg 抖动算法
+	function applyFloydSteinbergDither(
+		imageData: ImageData,
+		width: number,
+		height: number
+	) {
+		const data = imageData.data;
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+				const idx = (y * width + x) * 4;
+				const oldPixel = data[idx]; // 只取灰度
+				const newPixel = oldPixel < 128 ? 0 : 255;
+				const quantError = oldPixel - newPixel;
+				data[idx] = data[idx + 1] = data[idx + 2] = newPixel;
+				// 扩散误差
+				function distributeError(x1: number, y1: number, factor: number) {
+					if (x1 < 0 || x1 >= width || y1 < 0 || y1 >= height) return;
+					const idx1 = (y1 * width + x1) * 4;
+					data[idx1] = clamp(data[idx1] + quantError * factor);
+					data[idx1 + 1] = clamp(data[idx1 + 1] + quantError * factor);
+					data[idx1 + 2] = clamp(data[idx1 + 2] + quantError * factor);
+				}
+				distributeError(x + 1, y, 7 / 16);
+				distributeError(x - 1, y + 1, 3 / 16);
+				distributeError(x, y + 1, 5 / 16);
+				distributeError(x + 1, y + 1, 1 / 16);
+			}
+		}
+		function clamp(v: number) {
+			return Math.max(0, Math.min(255, v));
+		}
+	}
+
 	// 状态
 	const [stream, setStream] = useState<MediaStream | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -24,17 +57,13 @@ const CameraView: React.FC<{
 	useEffect(() => {
 		const initCamera = async () => {
 			try {
-				// 获取摄像头权限和视频流
 				const mediaStream = await navigator.mediaDevices.getUserMedia({
 					video: true,
 					audio: false,
 				});
-
-				// 设置视频流
 				if (videoRef.current) {
 					videoRef.current.srcObject = mediaStream;
 				}
-
 				setStream(mediaStream);
 				setIsLoading(false);
 			} catch (err) {
@@ -43,9 +72,7 @@ const CameraView: React.FC<{
 				setIsLoading(false);
 			}
 		};
-
 		initCamera();
-
 		// 组件卸载时清理资源
 		return () => {
 			if (stream) {
@@ -54,26 +81,52 @@ const CameraView: React.FC<{
 		};
 	}, []);
 
+	// 实时抖动处理
+	useEffect(() => {
+		let running = true;
+		function draw() {
+			if (!running) return;
+			const video = videoRef.current;
+			const canvas = canvasRef.current;
+			if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+				// 以视频实际尺寸为准
+				canvas.width = video.videoWidth;
+				canvas.height = video.videoHeight;
+				const ctx = canvas.getContext("2d");
+				if (ctx) {
+					ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+					const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+					// 灰度化
+					for (let i = 0; i < imageData.data.length; i += 4) {
+						const avg =
+							(imageData.data[i] +
+								imageData.data[i + 1] +
+								imageData.data[i + 2]) /
+							3;
+						imageData.data[i] =
+							imageData.data[i + 1] =
+							imageData.data[i + 2] =
+								avg;
+					}
+					applyFloydSteinbergDither(imageData, canvas.width, canvas.height);
+					ctx.putImageData(imageData, 0, 0);
+				}
+			}
+			requestAnimationFrame(draw);
+		}
+		draw();
+		return () => {
+			running = false;
+		};
+	}, []);
+
 	// 拍照功能
 	const handleCapture = () => {
-		if (!videoRef.current || !canvasRef.current) return;
-
-		const video = videoRef.current;
+		if (!canvasRef.current) return;
 		const canvas = canvasRef.current;
-
-		// 设置canvas尺寸匹配视频
-		canvas.width = video.videoWidth;
-		canvas.height = video.videoHeight;
-
-		// 在canvas上绘制当前视频帧
-		const context = canvas.getContext("2d");
-		if (context) {
-			context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-			// 获取照片URL
-			const photoUrl = canvas.toDataURL("image/jpeg");
-			onCapture(photoUrl);
-		}
+		// 直接导出当前 canvas（已抖动处理）为图片
+		const photoUrl = canvas.toDataURL("image/jpeg");
+		onCapture(photoUrl);
 	};
 
 	// 如果有错误，显示错误信息
@@ -108,21 +161,46 @@ const CameraView: React.FC<{
 	}
 
 	return (
-		<div className="p-2 flex flex-col">
-			{/* 显示摄像头视频 */}
-			<div className="relative bg-black" style={{ height: "300px" }}>
-				<video
-					ref={videoRef}
-					autoPlay
-					playsInline
-					className="w-full h-full object-contain"
-				/>
+		<div
+			className="flex flex-col items-center justify-center p-4 gap-3"
+			style={{ minHeight: 360 }}
+		>
+			{/* 摄像头视频区域 */}
+			<div className="window" style={{ width: 340, maxWidth: "100%" }}>
+				<div className="title-bar">
+					<div className="title-bar-text">摄像头画面</div>
+				</div>
+				<div
+					className="window-body flex items-center justify-center bg-black p-0"
+					style={{ height: 260 }}
+				>
+					{/* 隐藏 video，仅用于采集数据 */}
+					<video
+						ref={videoRef}
+						autoPlay
+						playsInline
+						className="hidden"
+						style={{ maxHeight: 240, borderRadius: 2 }}
+					/>
+					{/* 展示抖动效果的 canvas */}
+					<canvas
+						ref={canvasRef}
+						width={320}
+						height={240}
+						className="w-full h-full object-contain"
+						style={{ maxHeight: 240, borderRadius: 2, background: "black" }}
+					/>
+				</div>
 			</div>
 
 			{/* 拍照按钮 */}
-			<div className="mt-2 flex justify-center">
-				<button className="px-4" onClick={handleCapture}>
-					拍照
+			<div className="flex flex-row items-center justify-center gap-2 mt-2">
+				<button
+					className="button"
+					onClick={handleCapture}
+					style={{ minWidth: 80 }}
+				>
+					📸 拍照
 				</button>
 			</div>
 

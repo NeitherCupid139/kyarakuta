@@ -209,7 +209,7 @@ export default function ChapterConsistencyAnalyzer({
 							</div>
 						) : (
 							<div className="flex-grow flex items-center justify-center text-gray-500">
-								点击"开始分析"按钮分析当前章节
+								点击&quot;开始分析&quot;按钮分析当前章节
 							</div>
 						)}
 					</div>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useSplashStore } from "@/app/lib/splashStore";
 
@@ -23,11 +23,11 @@ const SplashScreen: React.FC = () => {
 	const [isBooting, setIsBooting] = useState<boolean>(false);
 
 	// 处理动画完成
-	const handleAnimationComplete = () => {
+	const handleAnimationComplete = useCallback(() => {
 		// 设置已显示开机动画
 		setHasShownSplash(true);
 		setIsShowingSplash(false);
-	};
+	}, [setHasShownSplash, setIsShowingSplash]);
 
 	// 处理开机按钮点击
 	const handlePowerButtonClick = () => {
@@ -84,7 +84,7 @@ const SplashScreen: React.FC = () => {
 		return () => {
 			clearInterval(interval);
 		};
-	}, [isBooting, setHasShownSplash, setIsShowingSplash]);
+	}, [isBooting, handleAnimationComplete]);
 
 	// 组件卸载时清理音频
 	useEffect(() => {

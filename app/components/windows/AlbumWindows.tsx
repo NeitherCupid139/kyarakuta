@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import "98.css";
 import { usePhotoStorage, Photo, Category } from "@/app/hooks/usePhotoStorage";
 import Image from "next/image";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 滤镜效果定义
 const FILTERS = [
@@ -276,8 +277,14 @@ export default function AlbumWindows() {
 	};
 
 	// 处理照片删除
-	const handlePhotoDelete = (id: number) => {
-		if (window.confirm("确定要删除这张照片吗？")) {
+	const handlePhotoDelete = async (id: number) => {
+		// 使用Modal.confirm替代window.confirm
+		const confirmed = await Modal.confirm("确定要删除这张照片吗？", {
+			title: "删除照片",
+			icon: "/icons/delete.png",
+		});
+
+		if (confirmed) {
 			deletePhoto(id);
 			// 如果删除的是当前选中的照片，清除选中状态
 			if (selectedPhoto && selectedPhoto.id === id) {

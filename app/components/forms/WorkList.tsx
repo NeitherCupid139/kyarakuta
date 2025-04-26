@@ -1,5 +1,6 @@
 import React from "react";
 import { Work } from "./WorkForm";
+import { Modal } from "@/app/components/windows/ModalWindows";
 
 // 列表属性定义
 interface WorkListProps {
@@ -25,6 +26,19 @@ export default function WorkList({ works, onEdit, onDelete }: WorkListProps) {
 		);
 	}
 
+	// 处理作品删除
+	const handleDeleteWork = async (work: Work) => {
+		// 二次确认删除
+		const confirmed = await Modal.confirm(`确定要删除作品"${work.title}"吗？`, {
+			title: "删除作品",
+			icon: "/icons/delete.png",
+		});
+
+		if (confirmed) {
+			onDelete(work.id);
+		}
+	};
+
 	return (
 		<table className="table98" style={{ width: "100%" }}>
 			<thead>
@@ -46,12 +60,7 @@ export default function WorkList({ works, onEdit, onDelete }: WorkListProps) {
 							<button
 								className="button"
 								style={{ marginLeft: 8 }}
-								onClick={() => {
-									// 二次确认删除
-									if (window.confirm(`确定要删除作品"${work.title}"吗？`)) {
-										onDelete(work.id);
-									}
-								}}
+								onClick={() => handleDeleteWork(work)}
 							>
 								删除
 							</button>

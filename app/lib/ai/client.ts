@@ -117,7 +117,16 @@ export async function characterChat(params: CharacterChatParams) {
 		temperature: TASK_TEMPERATURES.CHARACTER_CHAT,
 	});
 
-	return response.choices[0]?.message?.content || "角色无法回应";
+	// 处理返回值，确保可以访问到消息内容
+	if (
+		"choices" in response &&
+		response.choices &&
+		response.choices.length > 0
+	) {
+		return response.choices[0]?.message?.content || "角色无法回应";
+	}
+
+	return "角色无法回应";
 }
 
 /**
@@ -167,7 +176,16 @@ export async function storyAnalysis(params: StoryAnalysisParams) {
 		temperature: TASK_TEMPERATURES.STORY_ANALYSIS,
 	});
 
-	return response.choices[0]?.message?.content || "无法完成分析";
+	// 处理返回值，确保可以访问到消息内容
+	if (
+		"choices" in response &&
+		response.choices &&
+		response.choices.length > 0
+	) {
+		return response.choices[0]?.message?.content || "无法完成分析";
+	}
+
+	return "无法完成分析";
 }
 
 /**
@@ -226,5 +244,14 @@ export async function consistencyCheck(params: ConsistencyCheckParams) {
 		temperature: TASK_TEMPERATURES.CONSISTENCY_CHECK,
 	});
 
-	return response.choices[0]?.message?.content || "无法完成一致性检查";
+	// 处理返回值，确保可以访问到消息内容
+	if (
+		"choices" in response &&
+		response.choices &&
+		response.choices.length > 0
+	) {
+		return response.choices[0]?.message?.content || "无法完成一致性检查";
+	}
+
+	return "无法完成一致性检查";
 }

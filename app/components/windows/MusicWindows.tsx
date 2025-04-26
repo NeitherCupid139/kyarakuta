@@ -327,45 +327,108 @@ export default function MusicWindows() {
 
 				{/* 播放控制区 */}
 				<div className="controls" style={{ marginTop: "8px" }}>
-					{/* 播放/暂停按钮 */}
-					<button className="button" onClick={togglePlay}>
-						{isPlaying ? "暂停" : "播放"}
-					</button>
-
-					{/* 上一首/下一首按钮 */}
-					<button className="button" onClick={playPrevious}>
-						上一首
-					</button>
-					<button className="button" onClick={playNext}>
-						下一首
-					</button>
-
-					{/* 音量控制 */}
-					<button className="button" onClick={toggleMute}>
-						{isMuted ? "取消静音" : "静音"}
-					</button>
-					<button className="button" onClick={volumeDown}>
-						音量-
-					</button>
-					<button className="button" onClick={volumeUp}>
-						音量+
-					</button>
-
-					{/* 播放模式 */}
-					<button
-						className="button"
-						onClick={toggleRepeat}
-						style={{ color: isRepeat ? "blue" : "" }}
+					{/* 播放控制区 */}
+					<div
+						className="flex flex-row flex-wrap gap-3 items-center justify-center"
+						style={{ alignItems: "center", justifyContent: "center" }}
 					>
-						循环
-					</button>
-					<button
-						className="button"
-						onClick={toggleShuffle}
-						style={{ color: isShuffle ? "blue" : "" }}
-					>
-						随机
-					</button>
+						{/* 播放模式 */}
+						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+							<button
+								className="button"
+								onClick={toggleRepeat}
+								style={{ color: isRepeat ? "blue" : "" }}
+							>
+								<img src="/icons/loop.png" alt="循环" width={16} height={16} />
+							</button>
+							<span style={{ fontSize: 12 }}>循环</span>
+						</div>
+
+						{/* 上一首按钮 */}
+						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+							<button className="button" onClick={playPrevious}>
+								<img
+									src="/icons/previous.png"
+									alt="上一首"
+									width={16}
+									height={16}
+								/>
+							</button>
+							<span style={{ fontSize: 12 }}>上一首</span>
+						</div>
+
+						{/* 播放/暂停按钮 */}
+						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+							<button className="button" onClick={togglePlay}>
+								{isPlaying ? (
+									<img src="/icons/pause.png" alt="暂停" width={16} height={16} />
+								) : (
+									<img src="/icons/play.png" alt="播放" width={16} height={16} />
+								)}
+							</button>
+							<span style={{ fontSize: 12 }}>{isPlaying ? "暂停" : "播放"}</span>
+						</div>
+
+						{/* 下一首按钮 */}
+						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+							<button className="button" onClick={playNext}>
+								<img src="/icons/next.png" alt="下一首" width={16} height={16} />
+							</button>
+							<span style={{ fontSize: 12 }}>下一首</span>
+						</div>
+
+						{/* 随机播放 */}
+						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+							<button
+								className="button"
+								onClick={toggleShuffle}
+								style={{ color: isShuffle ? "blue" : "" }}
+							>
+								<img src="/icons/shuffle.png" alt="随机" width={16} height={16} />
+							</button>
+							<span style={{ fontSize: 12 }}>随机</span>
+						</div>
+
+						{/* 音量控制 */}
+						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+							<div className="flex flex-row gap-1 items-center">
+								<button className="button" onClick={volumeDown}>
+									<img
+										src="/icons/quieter.png"
+										alt="音量-"
+										width={16}
+										height={16}
+									/>
+								</button>
+								<button className="button" onClick={toggleMute}>
+									{isMuted ? (
+										<img
+											src="/icons/cancelmute.png"
+											alt="取消静音"
+											width={16}
+											height={16}
+										/>
+									) : (
+										<img
+											src="/icons/mute.png"
+											alt="静音"
+											width={16}
+											height={16}
+										/>
+									)}
+								</button>
+								<button className="button" onClick={volumeUp}>
+									<img
+										src="/icons/louder.png"
+										alt="音量+"
+										width={16}
+										height={16}
+									/>
+								</button>
+							</div>
+							<span style={{ fontSize: 12 }}>音量</span>
+						</div>
+					</div>
 				</div>
 
 				{/* 进度条 */}
