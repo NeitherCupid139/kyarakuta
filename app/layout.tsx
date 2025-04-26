@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
 import "98.css";
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
-});
+// 导入字体样式
+import localFont from "next/font/local";
 
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+// 加载本地字体
+const msFont = localFont({
+	src: "../public/fonts/MSW98UI-Regular.woff",
+	variable: "--ms-font",
+	display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -24,11 +24,8 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-				style={{ overflow: "hidden" }}
-			>
+		<html lang="en" className={msFont.variable}>
+			<body style={{ overflow: "hidden", fontFamily: "var(--ms-font)" }}>
 				{children}
 			</body>
 		</html>

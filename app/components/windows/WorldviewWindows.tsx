@@ -1,120 +1,104 @@
 import React, { useState } from "react";
-import Window98 from "../Window98";
 import "98.css";
 
-interface Worldview {
-  id: number;
-  title: string;
-  content: string;
-}
+// 导入自定义组件
+import WorldviewForm, { Worldview } from "@/app/components/forms/WorldviewForm";
+import WorldviewList from "@/app/components/forms/WorldviewList";
 
+// 初始世界观数据
 const initialWorldviews: Worldview[] = [];
 
+/**
+ * 世界观窗口组件
+ * 管理世界观信息的 CRUD 操作
+ */
 export default function WorldviewWindows() {
-  const [worldviews, setWorldviews] = useState<Worldview[]>(initialWorldviews);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [newTitle, setNewTitle] = useState("");
-  const [newContent, setNewContent] = useState("");
+	// 状态管理
+	const [worldviews, setWorldviews] = useState<Worldview[]>(initialWorldviews);
+	const [editingWorldview, setEditingWorldview] = useState<
+		Worldview | undefined
+	>(undefined);
 
-  const handleAdd = () => {
-    if (!newTitle.trim()) return;
-    setWorldviews([
-      ...worldviews,
-      { id: Date.now(), title: newTitle, content: newContent },
-    ]);
-    setNewTitle("");
-    setNewContent("");
-  };
+	// 处理添加世界观
+	const handleAddWorldview = (worldviewData: Omit<Worldview, "id">) => {
+		const newWorldview = {
+			id: Date.now(), // 使用时间戳作为临时 ID
+			...worldviewData,
+		};
 
-  const handleEdit = (id: number) => {
-    const worldview = worldviews.find((w) => w.id === id);
-    if (worldview) {
-      setEditingId(id);
-      setNewTitle(worldview.title);
-      setNewContent(worldview.content);
-    }
-  };
+		// 添加到列表末尾
+		setWorldviews([...worldviews, newWorldview]);
+	};
 
-  const handleSave = () => {
-    setWorldviews(
-      worldviews.map((w) =>
-        w.id === editingId ? { ...w, title: newTitle, content: newContent } : w
-      )
-    );
-    setEditingId(null);
-    setNewTitle("");
-    setNewContent("");
-  };
+	// 处理编辑世界观
+	const handleEdit = (id: number) => {
+		const worldview = worldviews.find((w) => w.id === id);
+		if (worldview) {
+			setEditingWorldview(worldview);
+		}
+	};
 
-  const handleDelete = (id: number) => {
-    setWorldviews(worldviews.filter((w) => w.id !== id));
-  };
+	// 处理保存编辑
+	const handleUpdateWorldview = (worldviewData: Omit<Worldview, "id">) => {
+		if (!editingWorldview) return;
 
-  return (
-    <Window98 title="世界观信息管理">
-      <div className="window-body">
-        <div className="field-row-stacked">
-          <label htmlFor="worldview-title">标题</label>
-          <input
-            id="worldview-title"
-            type="text"
-            value={newTitle}
-            onChange={e => setNewTitle(e.target.value)}
-            style={{ marginBottom: 8 }}
-          />
-        </div>
-        <div className="field-row-stacked">
-          <label htmlFor="worldview-content">内容</label>
-          <input
-            id="worldview-content"
-            type="text"
-            value={newContent}
-            onChange={e => setNewContent(e.target.value)}
-            style={{ marginBottom: 8 }}
-          />
-        </div>
-        <div className="field-row">
-          {editingId ? (
-            <button className="button" onClick={handleSave}>保存</button>
-          ) : (
-            <button className="button" onClick={handleAdd}>添加</button>
-          )}
-          {editingId && (
-            <button
-              className="button"
-              style={{ marginLeft: 8 }}
-              onClick={() => {
-                setEditingId(null);
-                setNewTitle("");
-                setNewContent("");
-              }}
-            >
-              取消
-            </button>
-          )}
-        </div>
-        <ul style={{ marginTop: 16 }}>
-          {worldviews.map((w) => (
-            <li key={w.id} style={{ marginBottom: 8 }}>
-              <b>{w.title}</b>：{w.content}
-              <button
-                className="button"
-                style={{ marginLeft: 8 }}
-                onClick={() => handleEdit(w.id)}
-              >
-                编辑
-              </button>
-              <button
-                className="button"
-                style={{ marginLeft: 4 }}
-                onClick={() => handleDelete(w.id)}
-              >
-                删除
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </Window98>
-  );
+		setWorldviews(
+			worldviews.map((w) =>
+				w.id === editingWorldview.id ? { ...w, ...worldviewData } : w
+			)
+		);
+		setEditingWorldview(undefined);
+	};
+
+	// 处理删除世界观
+	const handleDelete = (id: number) => {
+		setWorldviews(worldviews.filter((w) => w.id !== id));
+	};
+
+	// 取消编辑
+	const handleCancelEdit = () => {
+		setEditingWorldview(undefined);
+	};
+
+	// 分析世界观（未来实现）
+	const handleAnalyzeWorldview = (worldview: Worldview) => {
+		// 这里将来会实现世界观分析功能
+		alert(
+			`即将分析世界观"${worldview.title}"与章节的匹配度...\n\n${worldview.content}`
+		);
+	};
+
+	return (
+		<div
+			className="window-body"
+			style={{ minHeight: 350, display: "flex", flexDirection: "column" }}
+		>
+			<h3>世界观管理</h3>
+
+			<div style={{ display: "flex", gap: 24, flexGrow: 1 }}>
+				{/* 左侧：世界观表单 */}
+				<div style={{ flex: "0 0 40%" }}>
+					{editingWorldview ? (
+						<WorldviewForm
+							worldview={editingWorldview}
+							onSubmit={handleUpdateWorldview}
+							onCancel={handleCancelEdit}
+						/>
+					) : (
+						<WorldviewForm onSubmit={handleAddWorldview} />
+					)}
+				</div>
+
+				{/* 右侧：世界观列表 */}
+				<div style={{ flex: "0 0 60%" }}>
+					<WorldviewList
+						worldviews={worldviews}
+						onEdit={handleEdit}
+						onDelete={handleDelete}
+						onAnalyze={handleAnalyzeWorldview}
+					/>
+				</div>
+			</div>
+		</div>
+	);
 }

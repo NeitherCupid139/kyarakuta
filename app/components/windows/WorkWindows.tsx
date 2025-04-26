@@ -1,131 +1,81 @@
 import React, { useState } from "react";
-
 import "98.css";
 
-interface Work {
-	id: number;
-	title: string;
-	description: string;
-}
+// 导入自定义组件
+import WorkForm, { Work } from "@/app/components/forms/WorkForm";
+import WorkList from "@/app/components/forms/WorkList";
 
+// 初始作品数据
 const initialWorks: Work[] = [
 	{ id: 1, title: "作品一", description: "这是第一个作品的描述。" },
 	{ id: 2, title: "作品二", description: "这是第二个作品的描述。" },
 	{ id: 3, title: "作品三", description: "这是第三个作品的描述。" },
 ];
 
+/**
+ * 作品窗口组件
+ * 管理作品的 CRUD 操作
+ */
 export default function WorkWindows() {
+	// 状态管理
 	const [works, setWorks] = useState<Work[]>(initialWorks);
-	const [editingId, setEditingId] = useState<number | null>(null);
-	const [newTitle, setNewTitle] = useState("");
-	const [newDesc, setNewDesc] = useState("");
+	const [editingWork, setEditingWork] = useState<Work | undefined>(undefined);
 
-	// 添加作品
-	const handleAdd = () => {
-		if (!newTitle.trim()) return;
-		setWorks([
-			...works,
-			{ id: Date.now(), title: newTitle, description: newDesc },
-		]);
-		setNewTitle("");
-		setNewDesc("");
+	// 处理添加作品
+	const handleAddWork = (workData: Omit<Work, "id">) => {
+		const newWork = {
+			id: Date.now(), // 使用时间戳作为临时 ID
+			...workData,
+		};
+		setWorks([...works, newWork]);
 	};
 
-	// 编辑作品
+	// 处理编辑作品
 	const handleEdit = (id: number) => {
 		const work = works.find((w) => w.id === id);
 		if (work) {
-			setEditingId(id);
-			setNewTitle(work.title);
-			setNewDesc(work.description);
+			setEditingWork(work);
 		}
 	};
-	const handleSave = () => {
+
+	// 处理保存编辑
+	const handleUpdateWork = (workData: Omit<Work, "id">) => {
+		if (!editingWork) return;
+
 		setWorks(
-			works.map((w) =>
-				w.id === editingId ? { ...w, title: newTitle, description: newDesc } : w
-			)
+			works.map((w) => (w.id === editingWork.id ? { ...w, ...workData } : w))
 		);
-		setEditingId(null);
-		setNewTitle("");
-		setNewDesc("");
+		setEditingWork(undefined);
 	};
-	// 删除作品
+
+	// 处理删除作品
 	const handleDelete = (id: number) => {
 		setWorks(works.filter((w) => w.id !== id));
+	};
+
+	// 取消编辑
+	const handleCancelEdit = () => {
+		setEditingWork(undefined);
 	};
 
 	return (
 		<div className="window-body" style={{ minHeight: 350 }}>
 			<h3>作品列表</h3>
-			<table className="table98" style={{ width: "100%" }}>
-				<thead>
-					<tr>
-						<th>标题</th>
-						<th>描述</th>
-						<th>操作</th>
-					</tr>
-				</thead>
-				<tbody>
-					{works.map((work) => (
-						<tr key={work.id}>
-							<td>{work.title}</td>
-							<td>{work.description}</td>
-							<td>
-								<button className="button" onClick={() => handleEdit(work.id)}>
-									编辑
-								</button>
-								<button
-									className="button"
-									style={{ marginLeft: 8 }}
-									onClick={() => handleDelete(work.id)}
-								>
-									删除
-								</button>
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
+
+			{/* 作品列表 */}
+			<WorkList works={works} onEdit={handleEdit} onDelete={handleDelete} />
 
 			<div style={{ marginTop: 24 }}>
-				<h4>{editingId ? "编辑作品" : "添加新作品"}</h4>
-				<div className="field-row" style={{ marginBottom: 8 }}>
-  <label htmlFor="work-title" style={{ minWidth: 60 }}>标题</label>
-  <input
-    id="work-title"
-    type="text"
-    value={newTitle}
-    onChange={e => setNewTitle(e.target.value)}
-    style={{ marginRight: 8, flex: 1 }}
-  />
-  <label htmlFor="work-desc" style={{ minWidth: 60 }}>描述</label>
-  <input
-    id="work-desc"
-    type="text"
-    value={newDesc}
-    onChange={e => setNewDesc(e.target.value)}
-    style={{ marginRight: 8, flex: 2 }}
-  />
-  {editingId ? (
-    <button className="button" onClick={handleSave}>保存</button>
-  ) : (
-    <button className="button" onClick={handleAdd}>添加</button>
-  )}
-  {editingId && (
-    <button
-      className="button"
-      style={{ marginLeft: 8 }}
-      onClick={() => {
-        setEditingId(null);
-        setNewTitle("");
-        setNewDesc("");
-      }}
-    >
-      取消
-    </button>
-  )}
-</div>
+				{/* 编辑或添加作品表单 */}
+				{editingWork ? (
+					<WorkForm
+						work={editingWork}
+						onSubmit={handleUpdateWork}
+						onCancel={handleCancelEdit}
+					/>
+				) : (
+					<WorkForm onSubmit={handleAddWork} />
+				)}
 			</div>
 		</div>
 	);

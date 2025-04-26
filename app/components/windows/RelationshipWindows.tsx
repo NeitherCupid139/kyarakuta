@@ -1,157 +1,157 @@
 import React, { useState } from "react";
-import Window98 from "../Window98";
 import "98.css";
 
-interface Relationship {
-	id: number;
-	from: string;
-	to: string;
-	type: string;
-	description: string;
-}
+// 导入自定义组件
+import RelationshipForm, {
+	Relationship,
+} from "@/app/components/forms/RelationshipForm";
+import RelationshipList from "@/app/components/forms/RelationshipList";
+import { Character } from "@/app/components/forms/CharacterForm";
 
+// 初始示例角色数据
+const sampleCharacters: Character[] = [
+	{ id: 1, name: "张三", description: "主角，热情开朗" },
+	{ id: 2, name: "李四", description: "张三的好友，稳重可靠" },
+	{ id: 3, name: "王五", description: "神秘人物，身份成谜" },
+	{ id: 4, name: "赵六", description: "反派角色，野心勃勃" },
+];
+
+// 初始关系数据
 const initialRelationships: Relationship[] = [];
 
+/**
+ * 角色关系窗口组件
+ * 管理角色间关系的 CRUD 操作
+ */
 export default function RelationshipWindows() {
+	// 状态管理
+	const [characters] = useState<Character[]>(sampleCharacters); // 在实际应用中，这应该从数据库获取
 	const [relationships, setRelationships] =
 		useState<Relationship[]>(initialRelationships);
-	const [editingId, setEditingId] = useState<number | null>(null);
-	const [from, setFrom] = useState("");
-	const [to, setTo] = useState("");
-	const [type, setType] = useState("");
-	const [desc, setDesc] = useState("");
+	const [editingRelationship, setEditingRelationship] = useState<
+		Relationship | undefined
+	>(undefined);
 
-	const handleAdd = () => {
-		if (!from.trim() || !to.trim() || !type.trim()) return;
-		setRelationships([
-			...relationships,
-			{ id: Date.now(), from, to, type, description: desc },
-		]);
-		setFrom("");
-		setTo("");
-		setType("");
-		setDesc("");
+	// 处理添加关系
+	const handleAddRelationship = (
+		relationshipData: Omit<
+			Relationship,
+			"id" | "character1Name" | "character2Name"
+		>
+	) => {
+		// 查找角色名称
+		const character1 = characters.find(
+			(c) => c.id === relationshipData.characterId1
+		);
+		const character2 = characters.find(
+			(c) => c.id === relationshipData.characterId2
+		);
+
+		if (!character1 || !character2) {
+			alert("无法找到选择的角色");
+			return;
+		}
+
+		const newRelationship: Relationship = {
+			id: Date.now(), // 使用时间戳作为临时 ID
+			...relationshipData,
+			character1Name: character1.name,
+			character2Name: character2.name,
+		};
+
+		// 添加到列表末尾
+		setRelationships([...relationships, newRelationship]);
 	};
 
+	// 处理编辑关系
 	const handleEdit = (id: number) => {
-		const rel = relationships.find((r) => r.id === id);
-		if (rel) {
-			setEditingId(id);
-			setFrom(rel.from);
-			setTo(rel.to);
-			setType(rel.type);
-			setDesc(rel.description);
+		const relationship = relationships.find((r) => r.id === id);
+		if (relationship) {
+			setEditingRelationship(relationship);
 		}
 	};
 
-	const handleSave = () => {
+	// 处理保存编辑
+	const handleUpdateRelationship = (
+		relationshipData: Omit<
+			Relationship,
+			"id" | "character1Name" | "character2Name"
+		>
+	) => {
+		if (!editingRelationship) return;
+
+		// 查找角色名称
+		const character1 = characters.find(
+			(c) => c.id === relationshipData.characterId1
+		);
+		const character2 = characters.find(
+			(c) => c.id === relationshipData.characterId2
+		);
+
+		if (!character1 || !character2) {
+			alert("无法找到选择的角色");
+			return;
+		}
+
 		setRelationships(
 			relationships.map((r) =>
-				r.id === editingId ? { ...r, from, to, type, description: desc } : r
+				r.id === editingRelationship.id
+					? {
+							...r,
+							...relationshipData,
+							character1Name: character1.name,
+							character2Name: character2.name,
+					  }
+					: r
 			)
 		);
-		setEditingId(null);
-		setFrom("");
-		setTo("");
-		setType("");
-		setDesc("");
+		setEditingRelationship(undefined);
 	};
 
+	// 处理删除关系
 	const handleDelete = (id: number) => {
 		setRelationships(relationships.filter((r) => r.id !== id));
 	};
 
+	// 取消编辑
+	const handleCancelEdit = () => {
+		setEditingRelationship(undefined);
+	};
+
 	return (
-		<Window98 title="角色关系管理">
-			<div className="window-body">
-				<div className="field-row-stacked">
-					<label htmlFor="from">角色A</label>
-					<input
-						id="from"
-						type="text"
-						value={from}
-						onChange={(e) => setFrom(e.target.value)}
-						style={{ marginBottom: 8 }}
-					/>
-				</div>
-				<div className="field-row-stacked">
-					<label htmlFor="to">角色B</label>
-					<input
-						id="to"
-						type="text"
-						value={to}
-						onChange={(e) => setTo(e.target.value)}
-						style={{ marginBottom: 8 }}
-					/>
-				</div>
-				<div className="field-row-stacked">
-					<label htmlFor="type">关系类型</label>
-					<input
-						id="type"
-						type="text"
-						value={type}
-						onChange={(e) => setType(e.target.value)}
-						style={{ marginBottom: 8 }}
-					/>
-				</div>
-				<div className="field-row-stacked">
-					<label htmlFor="desc">描述</label>
-					<input
-						id="desc"
-						type="text"
-						value={desc}
-						onChange={(e) => setDesc(e.target.value)}
-						style={{ marginBottom: 8 }}
-					/>
-				</div>
-				<div className="field-row">
-					{editingId ? (
-						<button className="button" onClick={handleSave}>
-							保存
-						</button>
+		<div
+			className="window-body"
+			style={{ minHeight: 350, display: "flex", flexDirection: "column" }}
+		>
+			<h3>角色关系管理</h3>
+
+			<div style={{ display: "flex", gap: 24, flexGrow: 1 }}>
+				{/* 左侧：关系表单 */}
+				<div style={{ flex: "0 0 40%" }}>
+					{editingRelationship ? (
+						<RelationshipForm
+							relationship={editingRelationship}
+							characters={characters}
+							onSubmit={handleUpdateRelationship}
+							onCancel={handleCancelEdit}
+						/>
 					) : (
-						<button className="button" onClick={handleAdd}>
-							添加
-						</button>
-					)}
-					{editingId && (
-						<button
-							className="button"
-							style={{ marginLeft: 8 }}
-							onClick={() => {
-								setEditingId(null);
-								setFrom("");
-								setTo("");
-								setType("");
-								setDesc("");
-							}}
-						>
-							取消
-						</button>
+						<RelationshipForm
+							characters={characters}
+							onSubmit={handleAddRelationship}
+						/>
 					)}
 				</div>
-				<ul style={{ marginTop: 16 }}>
-					{relationships.map((r) => (
-						<li key={r.id} style={{ marginBottom: 8 }}>
-							<b>{r.from}</b> -[{r.type}] <b>{r.to}</b>：{r.description}
-							<button
-								className="button"
-								style={{ marginLeft: 8 }}
-								onClick={() => handleEdit(r.id)}
-							>
-								编辑
-							</button>
-							<button
-								className="button"
-								style={{ marginLeft: 4 }}
-								onClick={() => handleDelete(r.id)}
-							>
-								删除
-							</button>
-						</li>
-					))}
-				</ul>
+
+				{/* 右侧：关系列表 */}
+				<div style={{ flex: "0 0 60%" }}>
+					<RelationshipList
+						relationships={relationships}
+						onEdit={handleEdit}
+						onDelete={handleDelete}
+					/>
+				</div>
 			</div>
-		</Window98>
+		</div>
 	);
 }

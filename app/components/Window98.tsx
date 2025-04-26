@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "98.css";
 
 interface Window98Props {
@@ -14,6 +14,9 @@ interface Window98Props {
 	maxHeight?: number;
 	onClose?: () => void;
 }
+
+// 为所有窗口设置一个全局计数器，用于管理z-index
+let globalZIndexCounter = 1000;
 
 export default function Window98({
 	title,
@@ -42,9 +45,37 @@ export default function Window98({
 		startT: number;
 	}>(null);
 	const dragOffset = useRef({ x: 0, y: 0 });
+	// 添加zIndex状态
+	const [zIndex, setZIndex] = useState(globalZIndexCounter);
+	// 添加音频引用
+	const clickSoundRef = useRef<HTMLAudioElement | null>(null);
+
+	// 初始化音频
+	useEffect(() => {
+		clickSoundRef.current = new Audio("/audio/mouse-click.mp3");
+	}, []);
+
+	// 播放点击音效
+	const playClickSound = () => {
+		if (clickSoundRef.current) {
+			clickSoundRef.current.currentTime = 0;
+			clickSoundRef.current
+				.play()
+				.catch((err) => console.error("音频播放失败:", err));
+		}
+	};
+
+	// 处理窗口置顶
+	const bringToFront = () => {
+		globalZIndexCounter += 1;
+		setZIndex(globalZIndexCounter);
+	};
 
 	// 拖动窗口
 	const onMouseDown = (e: React.MouseEvent) => {
+		// 点击标题栏时提升z-index
+		bringToFront();
+
 		setDragging(true);
 		dragOffset.current = {
 			x: e.clientX - position.left,
@@ -164,6 +195,29 @@ export default function Window98({
 		};
 	}, [resizing]);
 
+	// 窗口点击时提升z-index
+	const handleWindowClick = () => {
+		bringToFront();
+	};
+
+	// 处理最小化
+	const handleMinimize = () => {
+		playClickSound();
+		setMinimized(true);
+	};
+
+	// 处理最大化
+	const handleMaximize = () => {
+		playClickSound();
+		setMaximized((m) => !m);
+	};
+
+	// 处理关闭
+	const handleClose = () => {
+		playClickSound();
+		if (onClose) onClose();
+	};
+
 	// 渲染八个拖拽点
 	const renderResizeHandles = () => {
 		if (maximized || minimized) return null;
@@ -269,43 +323,51 @@ export default function Window98({
 
 	return (
 		<div
-			className="window"
+			className="window overflow-hidden"
 			style={{
 				position: "absolute",
 				left: maximized ? 0 : position.left,
 				top: maximized ? 0 : position.top,
-				width: maximized ? "100vw" : size.width,
+				width: maximized ? "100%" : size.width,
 				height: maximized ? "100vh" : minimized ? 36 : size.height,
-				zIndex: 1000,
+				zIndex, // 使用zIndex状态
 				display: minimized ? "none" : undefined,
-				minWidth,
-				minHeight,
-				maxWidth,
-				maxHeight,
+				// 在最大化状态下不限制窗口尺寸
+				minWidth: maximized ? "unset" : minWidth,
+				minHeight: maximized ? "unset" : minHeight,
+				maxWidth: maximized ? "none" : maxWidth,
+				maxHeight: maximized ? "none" : maxHeight,
 				boxSizing: "border-box",
 			}}
+			onClick={handleWindowClick}
 		>
 			<div
 				className="title-bar"
 				style={{ cursor: "move" }}
 				onMouseDown={onMouseDown}
 			>
-				<div className="title-bar-text" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+				<div
+					className="title-bar-text"
+					style={{ display: "flex", alignItems: "center", gap: 6 }}
+				>
 					{iconUrl && (
-						<img src={iconUrl} alt="window icon" style={{ width: 16, height: 16, marginRight: 4, display: 'inline-block' }} />
+						<img
+							src={iconUrl}
+							alt="window icon"
+							style={{
+								width: 16,
+								height: 16,
+								marginRight: 4,
+								display: "inline-block",
+							}}
+						/>
 					)}
 					{title}
 				</div>
 				<div className="title-bar-controls">
-					<button
-						aria-label="Minimize"
-						onClick={() => setMinimized(true)}
-					></button>
-					<button
-						aria-label="Maximize"
-						onClick={() => setMaximized((m) => !m)}
-					></button>
-					<button aria-label="Close" onClick={onClose}></button>
+					<button aria-label="Minimize" onClick={handleMinimize}></button>
+					<button aria-label="Maximize" onClick={handleMaximize}></button>
+					<button aria-label="Close" onClick={handleClose}></button>
 				</div>
 			</div>
 			{!minimized && !maximized && (

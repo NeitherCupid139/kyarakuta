@@ -1,121 +1,95 @@
 import React, { useState } from "react";
 import "98.css";
 
-interface Chapter {
-	id: number;
-	title: string;
-	summary: string;
-}
+// 导入自定义组件
+import ChapterForm, { Chapter } from "@/app/components/forms/ChapterForm";
+import ChapterList from "@/app/components/forms/ChapterList";
 
+// 初始章节数据
 const initialChapters: Chapter[] = [];
 
+/**
+ * 章节窗口组件
+ * 管理章节的 CRUD 操作
+ */
 export default function ChapterWindows() {
+	// 状态管理
 	const [chapters, setChapters] = useState<Chapter[]>(initialChapters);
-	const [editingId, setEditingId] = useState<number | null>(null);
-	const [newTitle, setNewTitle] = useState("");
-	const [newSummary, setNewSummary] = useState("");
+	const [editingChapter, setEditingChapter] = useState<Chapter | undefined>(
+		undefined
+	);
 
-	const handleAdd = () => {
-		if (!newTitle.trim()) return;
-		setChapters([
-			...chapters,
-			{ id: Date.now(), title: newTitle, summary: newSummary },
-		]);
-		setNewTitle("");
-		setNewSummary("");
+	// 处理添加章节
+	const handleAddChapter = (chapterData: Omit<Chapter, "id">) => {
+		const newChapter = {
+			id: Date.now(), // 使用时间戳作为临时 ID
+			...chapterData,
+		};
+
+		// 添加到列表末尾
+		setChapters([...chapters, newChapter]);
 	};
 
+	// 处理编辑章节
 	const handleEdit = (id: number) => {
 		const chapter = chapters.find((c) => c.id === id);
 		if (chapter) {
-			setEditingId(id);
-			setNewTitle(chapter.title);
-			setNewSummary(chapter.summary);
+			setEditingChapter(chapter);
 		}
 	};
 
-	const handleSave = () => {
+	// 处理保存编辑
+	const handleUpdateChapter = (chapterData: Omit<Chapter, "id">) => {
+		if (!editingChapter) return;
+
 		setChapters(
 			chapters.map((c) =>
-				c.id === editingId ? { ...c, title: newTitle, summary: newSummary } : c
+				c.id === editingChapter.id ? { ...c, ...chapterData } : c
 			)
 		);
-		setEditingId(null);
-		setNewTitle("");
-		setNewSummary("");
+		setEditingChapter(undefined);
 	};
 
+	// 处理删除章节
 	const handleDelete = (id: number) => {
 		setChapters(chapters.filter((c) => c.id !== id));
 	};
 
+	// 取消编辑
+	const handleCancelEdit = () => {
+		setEditingChapter(undefined);
+	};
+
 	return (
-		<div className="window-body">
-			<div className="field-row-stacked">
-				<label htmlFor="chapter-title">章节标题</label>
-				<input
-					id="chapter-title"
-					type="text"
-					value={newTitle}
-					onChange={(e) => setNewTitle(e.target.value)}
-					style={{ marginBottom: 8 }}
-				/>
+		<div
+			className="window-body"
+			style={{ minHeight: 350, display: "flex", flexDirection: "column" }}
+		>
+			<h3>章节管理</h3>
+
+			<div style={{ display: "flex", gap: 24, flexGrow: 1 }}>
+				{/* 左侧：章节表单 */}
+				<div style={{ flex: "0 0 50%" }}>
+					{editingChapter ? (
+						<ChapterForm
+							chapter={editingChapter}
+							onSubmit={handleUpdateChapter}
+							onCancel={handleCancelEdit}
+						/>
+					) : (
+						<ChapterForm onSubmit={handleAddChapter} />
+					)}
+				</div>
+
+				{/* 右侧：章节列表 */}
+				<div style={{ flex: "0 0 50%" }}>
+					<ChapterList
+						chapters={chapters}
+						onEdit={handleEdit}
+						onDelete={handleDelete}
+					/>
+				</div>
 			</div>
-			<div className="field-row-stacked">
-				<label htmlFor="chapter-summary">章节概要</label>
-				<input
-					id="chapter-summary"
-					type="text"
-					value={newSummary}
-					onChange={(e) => setNewSummary(e.target.value)}
-					style={{ marginBottom: 8 }}
-				/>
-			</div>
-			<div className="field-row">
-				{editingId ? (
-					<button className="button" onClick={handleSave}>
-						保存
-					</button>
-				) : (
-					<button className="button" onClick={handleAdd}>
-						添加
-					</button>
-				)}
-				{editingId && (
-					<button
-						className="button"
-						style={{ marginLeft: 8 }}
-						onClick={() => {
-							setEditingId(null);
-							setNewTitle("");
-							setNewSummary("");
-						}}
-					>
-						取消
-					</button>
-				)}
-			</div>
-			<ul style={{ marginTop: 16 }}>
-				{chapters.map((c) => (
-					<li key={c.id} style={{ marginBottom: 8 }}>
-						<b>{c.title}</b>：{c.summary}
-						<button
-							className="button"
-							style={{ marginLeft: 8 }}
-							onClick={() => handleEdit(c.id)}
-						>
-							编辑
-						</button>
-						<button
-							className="button"
-							style={{ marginLeft: 4 }}
-							onClick={() => handleDelete(c.id)}
-						>
-							删除
-						</button>
-					</li>
-				))}
-			</ul>
 		</div>
 	);
 }
