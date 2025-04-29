@@ -6,7 +6,6 @@ import "98.css";
 // 导入字体样式
 import localFont from "next/font/local";
 import Navbar from "./components/Navbar";
-import { WallpaperProvider } from "./components/context/WallpaperContext";
 
 // 加载本地字体
 const msFont = localFont({
@@ -34,10 +33,8 @@ export default function RootLayout({
 				style={{ overflow: "hidden", fontFamily: "var(--ms-font)" }}
 				className="relative"
 			>
-				<WallpaperProvider>
-					{children}
-					<Navbar />
-				</WallpaperProvider>
+				{children}
+				<Navbar />
 			</body>
 		</html>
 	);

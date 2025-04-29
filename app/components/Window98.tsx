@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import "98.css";
-import { useProcessStore } from "../store/process";
+import { useProcessStore } from "../store/processStore";
 
 interface Window98Props {
 	title: string;

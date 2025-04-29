@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useProcessStore } from "@/app/store/process";
+import { useProcessStore } from "@/app/store/processStore";
 import { useState, useEffect, useRef } from "react";
 import { useSplashStore } from "@/app/lib/splashStore";
 import { Modal } from "@/app/components/windows/ModalWindows";

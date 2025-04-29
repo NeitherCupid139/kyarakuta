@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useWallpaperStore } from "@/app/store/wallpaperStore";
-import { useWallpaperPreview } from "@/app/components/hooks/useWallpaperPreview";
+import { useWallpaperPreview } from "@hooks/useWallpaperPreview";
 import WallpaperPreview from "@/app/components/windows/WallpaperPreview";
 import UploadWallpaper from "@/app/components/windows/UploadWallpaper";
 

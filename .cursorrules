@@ -1,1 +1,4 @@
    使用 98.css 作为 UI 库
+ 无后端逻辑
+直接通过 Supabase 的 JavaScript 客户端操作数据库，无需编写后端 API 
+ 使用 drizzle orm

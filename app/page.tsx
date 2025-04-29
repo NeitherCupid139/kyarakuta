@@ -2,18 +2,8 @@
 import "98.css";
 import React, { useEffect, useRef, useState } from "react";
 import Window98 from "./components/Window98";
-import ChapterWindows from "./components/windows/ChapterWindows";
 import Image from "next/image";
 import AboutWindows from "./components/windows/AboutWindows";
-import WorkWindows from "./components/windows/WorkWindows";
-import EventWindows from "./components/windows/EventWindows";
-import CharacterWindows from "./components/windows/CharacterWindows";
-import RelationshipWindows from "./components/windows/RelationshipWindows";
-import WorldviewWindows from "./components/windows/WorldviewWindows";
-import TimelineWindows from "./components/windows/TimelineWindows";
-import CustomAttributesWindow from "./components/windows/CustomAttributesWindow";
-import CharacterChatWindow from "./components/ai/CharacterChatWindow";
-import ChapterConsistencyAnalyzer from "./components/ai/ChapterConsistencyAnalyzer";
 import SplashScreen from "./components/SplashScreen";
 import { useSplashStore } from "./lib/splashStore";
 import Wallpaper from "./components/windows/Wallpaper";
@@ -23,8 +13,17 @@ import CameraWindows from "./components/windows/CameraWindows";
 import AlbumWindows from "./components/windows/AlbumWindows";
 import FacetimeWindows from "./components/windows/FacetimeWindows";
 import Navbar from "./components/Navbar";
-import { useProcessStore } from "./store/process";
+import { useProcessStore } from "./store/processStore";
 import ModalWindows from "./components/windows/ModalWindows";
+import WorksWindows from "./components/windows/WorksWindows";
+import ChaptersWindows from "./components/windows/ChaptersWindows";
+import EventsWindows from "./components/windows/EventsWindows";
+import CharactersWindows from "./components/windows/CharactersWindows";
+import CharacterRelationsWindows from "./components/windows/CharacterRelationsWindows";
+import WorldSettingsWindows from "./components/windows/WorldSettingsWindows";
+import TimelineWindows from "./components/windows/TimelineWindows";
+import CharacterChatWindow from "./components/windows/CharacterChatWindow";
+import ChapterConsistencyAnalyzer from "./components/windows/ChapterConsistencyAnalyzer";
 
 export default function Home() {
 	// 使用Zustand store
@@ -351,107 +350,68 @@ export default function Home() {
 				))}
 			</div>
 
-			{/* 弹窗区 */}
-			{openWindows.map((win) => {
-				// 获取当前窗口索引，用于zIndex计算
-				const windowIndex = openWindows.findIndex((w) => w.id === win.id);
-				const zIndex = 1000 + windowIndex;
-
-				// 处理置顶方法
-				const handleBringToFront = () => {
-					setOpenWindows((prev) => {
-						const filtered = prev.filter((w) => w.id !== win.id);
-						return [...filtered, prev.find((w) => w.id === win.id)!];
-					});
-					// 更新进程状态为活动
-					const iconConfig = iconConfigs.find((c) => c.type === win.type);
-					if (iconConfig) {
-						updateProcessState(iconConfig.label, "normal");
+			{/* 渲染打开的窗口 */}
+			{openWindows.map((win) => (
+				<Window98
+					key={win.id}
+					initialPosition={randomPosition()}
+					title={
+						iconConfigs.find((c) => c.type === win.type)?.label || win.type
 					}
-				};
-
-				// 根据窗口类型渲染不同组件
-				const renderWindowContent = () => {
-					switch (win.type) {
-						case "custom":
-							return (
-								<CustomAttributesWindow
-									onClose={() => handleClose(win.id)}
-									zIndex={zIndex}
-									onBringToFront={handleBringToFront}
-								/>
-							);
-						case "character-chat":
-							return (
-								<CharacterChatWindow
-									onClose={() => handleClose(win.id)}
-									character={win.data?.character || mockCharacter}
-								/>
-							);
-						case "chapter-analysis":
-							return (
-								<ChapterConsistencyAnalyzer
-									onClose={() => handleClose(win.id)}
-									chapterId={win.data?.chapter?.id}
-									chapterTitle={win.data?.chapter?.title}
-									chapterContent={win.data?.chapter?.content}
-								/>
-							);
-						default:
-							return (
-								<Window98
-									initialPosition={randomPosition()}
-									title={
-										iconConfigs.find((c) => c.type === win.type)?.label ||
-										win.type
-									}
-									iconUrl={iconConfigs.find((c) => c.type === win.type)?.icon}
-									onClose={() => handleClose(win.id)}
-									windowType={win.type}
-								>
-									{(() => {
-										switch (win.type) {
-											case "work":
-												return <WorkWindows />;
-											case "chapter":
-												return <ChapterWindows />;
-											case "event":
-												return <EventWindows />;
-											case "character":
-												return <CharacterWindows />;
-											case "relation":
-												return <RelationshipWindows />;
-											case "world":
-												return <WorldviewWindows />;
-											case "timeline":
-												return <TimelineWindows />;
-											case "about":
-												return <AboutWindows />;
-											case "wallpaper":
-												return <Wallpaper />;
-											case "music":
-												return <MusicWindows />;
-											case "map":
-												return <MapWindows />;
-											case "camera":
-												return <CameraWindows />;
-											case "album":
-												return <AlbumWindows />;
-											case "facetime":
-												return <FacetimeWindows />;
-											default:
-												return <div>未知窗口</div>;
-										}
-									})()}
-								</Window98>
-							);
-					}
-				};
-
-				return (
-					<React.Fragment key={win.id}>{renderWindowContent()}</React.Fragment>
-				);
-			})}
+					iconUrl={iconConfigs.find((c) => c.type === win.type)?.icon}
+					onClose={() => handleClose(win.id)}
+					windowType={win.type}
+				>
+					{(() => {
+						switch (win.type) {
+							case "work":
+								return <WorksWindows />;
+							case "chapter":
+								return <ChaptersWindows />;
+							case "event":
+								return <EventsWindows />;
+							case "character":
+								return <CharactersWindows />;
+							case "relation":
+								return <CharacterRelationsWindows />;
+							case "world":
+								return <WorldSettingsWindows />;
+							case "timeline":
+								return <TimelineWindows />;
+							case "about":
+								return <AboutWindows />;
+							case "wallpaper":
+								return <Wallpaper />;
+							case "music":
+								return <MusicWindows />;
+							case "map":
+								return <MapWindows />;
+							case "camera":
+								return <CameraWindows />;
+							case "album":
+								return <AlbumWindows />;
+							case "facetime":
+								return <FacetimeWindows />;
+							case "character-chat":
+								return (
+									<CharacterChatWindow
+										onClose={() => handleClose(win.id)}
+										character={win.data?.character}
+									/>
+								);
+							case "chapter-analysis":
+								return (
+									<ChapterConsistencyAnalyzer
+										onClose={() => handleClose(win.id)}
+										chapterId={win.data?.chapter?.id}
+									/>
+								);
+							default:
+								return <div>未知窗口</div>;
+						}
+					})()}
+				</Window98>
+			))}
 
 			{/* Navbar组件 */}
 			<Navbar />

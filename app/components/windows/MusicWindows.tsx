@@ -299,15 +299,8 @@ export default function MusicWindows() {
 				</div>
 
 				{/* 波形动画窗口 */}
-				<div
-					className="window"
-					style={{ margin: "8px 0", padding: "8px", height: "200px" }}
-				>
-					<div className="title-bar">
-						<div className="title-bar-text">音乐可视化</div>
-					</div>
+				<div style={{ margin: "8px 0", padding: "8px", height: "200px" }}>
 					<div
-						className="window-body"
 						style={{
 							height: "calc(100% - 20px)",
 							padding: "4px",
@@ -333,7 +326,10 @@ export default function MusicWindows() {
 						style={{ alignItems: "center", justifyContent: "center" }}
 					>
 						{/* 播放模式 */}
-						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+						<div
+							className="flex flex-col items-center"
+							style={{ minWidth: 56 }}
+						>
 							<button
 								className="button"
 								onClick={toggleRepeat}
@@ -345,7 +341,10 @@ export default function MusicWindows() {
 						</div>
 
 						{/* 上一首按钮 */}
-						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+						<div
+							className="flex flex-col items-center"
+							style={{ minWidth: 56 }}
+						>
 							<button className="button" onClick={playPrevious}>
 								<img
 									src="/icons/previous.png"
@@ -358,39 +357,73 @@ export default function MusicWindows() {
 						</div>
 
 						{/* 播放/暂停按钮 */}
-						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+						<div
+							className="flex flex-col items-center"
+							style={{ minWidth: 56 }}
+						>
 							<button className="button" onClick={togglePlay}>
 								{isPlaying ? (
-									<img src="/icons/pause.png" alt="暂停" width={16} height={16} />
+									<img
+										src="/icons/pause.png"
+										alt="暂停"
+										width={16}
+										height={16}
+									/>
 								) : (
-									<img src="/icons/play.png" alt="播放" width={16} height={16} />
+									<img
+										src="/icons/play.png"
+										alt="播放"
+										width={16}
+										height={16}
+									/>
 								)}
 							</button>
-							<span style={{ fontSize: 12 }}>{isPlaying ? "暂停" : "播放"}</span>
+							<span style={{ fontSize: 12 }}>
+								{isPlaying ? "暂停" : "播放"}
+							</span>
 						</div>
 
 						{/* 下一首按钮 */}
-						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+						<div
+							className="flex flex-col items-center"
+							style={{ minWidth: 56 }}
+						>
 							<button className="button" onClick={playNext}>
-								<img src="/icons/next.png" alt="下一首" width={16} height={16} />
+								<img
+									src="/icons/next.png"
+									alt="下一首"
+									width={16}
+									height={16}
+								/>
 							</button>
 							<span style={{ fontSize: 12 }}>下一首</span>
 						</div>
 
 						{/* 随机播放 */}
-						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+						<div
+							className="flex flex-col items-center"
+							style={{ minWidth: 56 }}
+						>
 							<button
 								className="button"
 								onClick={toggleShuffle}
 								style={{ color: isShuffle ? "blue" : "" }}
 							>
-								<img src="/icons/shuffle.png" alt="随机" width={16} height={16} />
+								<img
+									src="/icons/shuffle.png"
+									alt="随机"
+									width={16}
+									height={16}
+								/>
 							</button>
 							<span style={{ fontSize: 12 }}>随机</span>
 						</div>
 
 						{/* 音量控制 */}
-						<div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+						<div
+							className="flex flex-col items-center"
+							style={{ minWidth: 56 }}
+						>
 							<div className="flex flex-row gap-1 items-center">
 								<button className="button" onClick={volumeDown}>
 									<img

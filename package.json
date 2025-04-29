@@ -3,10 +3,13 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev --turbopack",
+		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint"
+		"lint": "next lint",
+		"db:generate": "drizzle-kit generate:pg",
+		"db:push": "drizzle-kit push:pg",
+		"db:studio": "drizzle-kit studio"
 	},
 	"dependencies": {
 		"98.css": "^0.1.20",
@@ -16,6 +19,7 @@
 		"drizzle-orm": "^0.43.1",
 		"next": "15.3.1",
 		"openai": "^4.96.0",
+		"peerjs": "^1.5.4",
 		"pg": "^8.15.5",
 		"postgres": "^3.4.5",
 		"react": "^19.0.0",
@@ -23,6 +27,8 @@
 		"react-dnd-html5-backend": "^16.0.1",
 		"react-dom": "^19.0.0",
 		"react-quill": "^2.0.0",
+		"server-only": "^0.0.1",
+		"tailwind-merge": "^3.2.0",
 		"uuid": "^11.1.0",
 		"vercel-ai": "^0.0.0",
 		"zhipu-ai-provider": "^0.1.1",
