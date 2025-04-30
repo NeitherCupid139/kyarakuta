@@ -3,142 +3,30 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import "98.css";
-
-// 简单的模拟信令服务器（真实环境中应该使用WebSocket或HTTP服务）
-class SignalingService {
-	private static instance: SignalingService;
-	private offers: Record<string, RTCSessionDescriptionInit> = {};
-	private answers: Record<string, RTCSessionDescriptionInit> = {};
-	private iceCandidates: Record<string, RTCIceCandidateInit[]> = {};
-
-	private constructor() {}
-
-	public static getInstance(): SignalingService {
-		if (!SignalingService.instance) {
-			SignalingService.instance = new SignalingService();
-		}
-		return SignalingService.instance;
-	}
-
-	public sendOffer(peerId: string, offer: RTCSessionDescriptionInit): void {
-		this.offers[peerId] = offer;
-	}
-
-	public getOffer(peerId: string): RTCSessionDescriptionInit | null {
-		return this.offers[peerId] || null;
-	}
-
-	public sendAnswer(peerId: string, answer: RTCSessionDescriptionInit): void {
-		this.answers[peerId] = answer;
-	}
-
-	public getAnswer(peerId: string): RTCSessionDescriptionInit | null {
-		return this.answers[peerId] || null;
-	}
-
-	public addIceCandidate(peerId: string, candidate: RTCIceCandidateInit): void {
-		if (!this.iceCandidates[peerId]) {
-			this.iceCandidates[peerId] = [];
-		}
-		this.iceCandidates[peerId].push(candidate);
-	}
-
-	public getIceCandidates(peerId: string): RTCIceCandidateInit[] {
-		return this.iceCandidates[peerId] || [];
-	}
-
-	public clearIceCandidates(peerId: string): void {
-		this.iceCandidates[peerId] = [];
-	}
-
-	public clearSignaling(peerId: string): void {
-		delete this.offers[peerId];
-		delete this.answers[peerId];
-		delete this.iceCandidates[peerId];
-	}
-}
+import { Peer, MediaConnection } from "peerjs";
 
 export default function FacetimeWindows() {
 	const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 	const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 	const [isCameraOn, setIsCameraOn] = useState(true);
 	const [isMicOn, setIsMicOn] = useState(true);
-	const [myPeerId] = useState(() => Math.random().toString(36).substr(2, 9));
+	const [peerId, setPeerId] = useState<string>("");
 	const [targetPeerId, setTargetPeerId] = useState("");
-	const [isCallInProgress, setIsCallInProgress] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [callStatus, setCallStatus] = useState<
 		"idle" | "calling" | "connected" | "incoming"
 	>("idle");
 
+	// 引用
 	const localVideoRef = useRef<HTMLVideoElement>(null);
 	const remoteVideoRef = useRef<HTMLVideoElement>(null);
-	const peerConnection = useRef<RTCPeerConnection | null>(null);
-	const signalingService = useRef(SignalingService.getInstance());
-	const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+	const localCanvasRef = useRef<HTMLCanvasElement>(null);
+	const remoteCanvasRef = useRef<HTMLCanvasElement>(null);
+	const peerRef = useRef<Peer | null>(null);
+	const currentCallRef = useRef<MediaConnection | null>(null);
 
-	// ICE服务器配置
-	const iceServers = {
-		iceServers: [
-			{ urls: "stun:stun.l.google.com:19302" },
-			{ urls: "stun:stun1.l.google.com:19302" },
-		],
-	};
-
-	// 检查是否有新的Offer
-	const checkForOffer = () => {
-		if (!targetPeerId) return;
-
-		const offer = signalingService.current.getOffer(myPeerId);
-		if (offer && callStatus === "idle") {
-			setCallStatus("incoming");
-			setTargetPeerId(targetPeerId);
-
-			// 自动接听
-			handleAnswer();
-		}
-	};
-
-	// 检查是否有新的Answer
-	const checkForAnswer = () => {
-		if (!targetPeerId || callStatus !== "calling") return;
-
-		const answer = signalingService.current.getAnswer(targetPeerId);
-		if (answer && peerConnection.current) {
-			handleIncomingAnswer(answer);
-		}
-	};
-
-	// 检查是否有新的ICE候选
-	const checkForIceCandidates = () => {
-		if (!targetPeerId) return;
-
-		const candidates = signalingService.current.getIceCandidates(myPeerId);
-		if (candidates.length > 0 && peerConnection.current) {
-			candidates.forEach((candidate) => {
-				peerConnection.current?.addIceCandidate(new RTCIceCandidate(candidate));
-			});
-			signalingService.current.clearIceCandidates(myPeerId);
-		}
-	};
-
-	// 设置轮询检查新消息
-	useEffect(() => {
-		pollingInterval.current = setInterval(() => {
-			checkForOffer();
-			checkForAnswer();
-			checkForIceCandidates();
-		}, 1000);
-
-		return () => {
-			if (pollingInterval.current) {
-				clearInterval(pollingInterval.current);
-			}
-		};
-	}, [targetPeerId, callStatus]);
-
-	// 初始化本地视频流
+	// 初始化本地视频流和PeerJS
 	useEffect(() => {
 		const initLocalStream = async () => {
 			try {
@@ -150,7 +38,33 @@ export default function FacetimeWindows() {
 				if (localVideoRef.current) {
 					localVideoRef.current.srcObject = stream;
 				}
-				setIsLoading(false);
+
+				// 初始化PeerJS
+				const peer = new Peer();
+
+				peer.on("open", (id) => {
+					setPeerId(id);
+					setIsLoading(false);
+					console.log("我的ID是:", id);
+				});
+
+				// 处理来电
+				peer.on("call", (call) => {
+					setCallStatus("incoming");
+					setTargetPeerId(call.peer);
+
+					currentCallRef.current = call;
+
+					// 自动接听
+					handleAnswer();
+				});
+
+				peer.on("error", (err) => {
+					console.error("PeerJS错误:", err);
+					setError(`连接错误: ${err.message}`);
+				});
+
+				peerRef.current = peer;
 			} catch (error) {
 				console.error("获取媒体设备失败:", error);
 				setError(
@@ -161,69 +75,48 @@ export default function FacetimeWindows() {
 		};
 		initLocalStream();
 
+		// 组件卸载时清理资源
 		return () => {
 			if (localStream) {
 				localStream.getTracks().forEach((track) => track.stop());
 			}
-			if (peerConnection.current) {
-				peerConnection.current.close();
+			if (currentCallRef.current) {
+				currentCallRef.current.close();
+			}
+			if (peerRef.current) {
+				peerRef.current.destroy();
 			}
 		};
 	}, []);
 
-	// 初始化WebRTC连接
-	const initPeerConnection = () => {
-		peerConnection.current = new RTCPeerConnection(iceServers);
-
-		// 添加本地媒体流
-		if (localStream) {
-			localStream.getTracks().forEach((track) => {
-				peerConnection.current?.addTrack(track, localStream);
-			});
-		}
-
-		// 监听远程流
-		peerConnection.current.ontrack = (event) => {
-			setRemoteStream(event.streams[0]);
-			if (remoteVideoRef.current) {
-				remoteVideoRef.current.srcObject = event.streams[0];
-			}
-			setCallStatus("connected");
-		};
-
-		// 监听ICE候选
-		peerConnection.current.onicecandidate = (event) => {
-			if (event.candidate && targetPeerId) {
-				signalingService.current.addIceCandidate(
-					targetPeerId,
-					event.candidate.toJSON()
-				);
-			}
-		};
-
-		// 监听连接状态变化
-		peerConnection.current.onconnectionstatechange = () => {
-			if (
-				peerConnection.current?.connectionState === "disconnected" ||
-				peerConnection.current?.connectionState === "failed"
-			) {
-				handleHangup();
-			}
-		};
-	};
-
 	// 处理呼叫
-	const handleCall = async () => {
-		if (!localStream || !targetPeerId) return;
-
-		initPeerConnection();
+	const handleCall = () => {
+		if (!localStream || !targetPeerId || !peerRef.current) return;
 
 		try {
-			const offer = await peerConnection.current!.createOffer();
-			await peerConnection.current!.setLocalDescription(offer);
+			// 使用PeerJS发起呼叫
+			const call = peerRef.current.call(targetPeerId, localStream);
+			currentCallRef.current = call;
 
-			// 发送offer到模拟的信令服务器
-			signalingService.current.sendOffer(targetPeerId, offer);
+			// 监听远程流
+			call.on("stream", (remoteVideoStream) => {
+				setRemoteStream(remoteVideoStream);
+				if (remoteVideoRef.current) {
+					remoteVideoRef.current.srcObject = remoteVideoStream;
+				}
+				setCallStatus("connected");
+			});
+
+			call.on("close", () => {
+				handleHangup();
+			});
+
+			call.on("error", (err) => {
+				console.error("呼叫错误:", err);
+				setError(`呼叫失败: ${err}`);
+				handleHangup();
+			});
+
 			setCallStatus("calling");
 		} catch (error) {
 			console.error("创建呼叫失败:", error);
@@ -232,54 +125,37 @@ export default function FacetimeWindows() {
 	};
 
 	// 处理接听
-	const handleAnswer = async () => {
-		if (!localStream) return;
-
-		initPeerConnection();
+	const handleAnswer = () => {
+		if (!localStream || !currentCallRef.current) return;
 
 		try {
-			const offer = signalingService.current.getOffer(myPeerId);
-			if (!offer) return;
+			// 使用PeerJS接听呼叫
+			currentCallRef.current.answer(localStream);
 
-			await peerConnection.current!.setRemoteDescription(
-				new RTCSessionDescription(offer)
-			);
-			const answer = await peerConnection.current!.createAnswer();
-			await peerConnection.current!.setLocalDescription(answer);
+			// 监听远程流
+			currentCallRef.current.on("stream", (remoteVideoStream) => {
+				setRemoteStream(remoteVideoStream);
+				if (remoteVideoRef.current) {
+					remoteVideoRef.current.srcObject = remoteVideoStream;
+				}
+				setCallStatus("connected");
+			});
 
-			// 发送answer到模拟的信令服务器
-			signalingService.current.sendAnswer(targetPeerId, answer);
-			setCallStatus("connected");
+			currentCallRef.current.on("close", () => {
+				handleHangup();
+			});
 		} catch (error) {
 			console.error("接听呼叫失败:", error);
 			setError("接听呼叫失败，请重试");
 		}
 	};
 
-	// 处理接收到的应答
-	const handleIncomingAnswer = async (answer: RTCSessionDescriptionInit) => {
-		try {
-			if (peerConnection.current) {
-				await peerConnection.current.setRemoteDescription(
-					new RTCSessionDescription(answer)
-				);
-				setCallStatus("connected");
-			}
-		} catch (error) {
-			console.error("设置远程描述失败:", error);
-			setError("连接失败，请重试");
-		}
-	};
-
 	// 处理挂断
 	const handleHangup = () => {
 		// 关闭连接
-		peerConnection.current?.close();
-		peerConnection.current = null;
-
-		// 清理信令
-		if (targetPeerId) {
-			signalingService.current.clearSignaling(targetPeerId);
+		if (currentCallRef.current) {
+			currentCallRef.current.close();
+			currentCallRef.current = null;
 		}
 
 		// 重置状态
@@ -304,6 +180,54 @@ export default function FacetimeWindows() {
 			setIsMicOn(!isMicOn);
 		}
 	};
+
+	// 绘制本地视频到画布
+	useEffect(() => {
+		let running = true;
+		function drawLocalVideo() {
+			if (!running) return;
+			const video = localVideoRef.current;
+			const canvas = localCanvasRef.current;
+			if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+				// 以视频实际尺寸为准
+				canvas.width = video.videoWidth;
+				canvas.height = video.videoHeight;
+				const ctx = canvas.getContext("2d");
+				if (ctx) {
+					ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+				}
+			}
+			requestAnimationFrame(drawLocalVideo);
+		}
+		drawLocalVideo();
+		return () => {
+			running = false;
+		};
+	}, []);
+
+	// 绘制远程视频到画布
+	useEffect(() => {
+		let running = true;
+		function drawRemoteVideo() {
+			if (!running) return;
+			const video = remoteVideoRef.current;
+			const canvas = remoteCanvasRef.current;
+			if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+				// 以视频实际尺寸为准
+				canvas.width = video.videoWidth;
+				canvas.height = video.videoHeight;
+				const ctx = canvas.getContext("2d");
+				if (ctx) {
+					ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+				}
+			}
+			requestAnimationFrame(drawRemoteVideo);
+		}
+		drawRemoteVideo();
+		return () => {
+			running = false;
+		};
+	}, [remoteStream]);
 
 	// 显示错误信息
 	if (error) {
@@ -348,7 +272,7 @@ export default function FacetimeWindows() {
 				<div className="window-body p-4">
 					<div className="field-row-stacked mb-2">
 						<label>我的ID</label>
-						<input type="text" value={myPeerId} readOnly className="w-full" />
+						<input type="text" value={peerId} readOnly className="w-full" />
 					</div>
 					<div className="field-row-stacked">
 						<label>对方ID</label>
@@ -372,11 +296,19 @@ export default function FacetimeWindows() {
 					</div>
 					<div className="window-body p-0">
 						<div className="relative w-full h-[240px] bg-black">
+							{/* 隐藏 video，仅用于采集数据 */}
 							<video
 								ref={localVideoRef}
 								autoPlay
 								muted
 								playsInline
+								className="hidden absolute top-0 left-0 w-full h-full"
+							/>
+							{/* 展示画布效果 */}
+							<canvas
+								ref={localCanvasRef}
+								width={320}
+								height={240}
 								className="w-full h-full object-cover"
 							/>
 							{!isCameraOn && (
@@ -395,10 +327,18 @@ export default function FacetimeWindows() {
 					</div>
 					<div className="window-body p-0">
 						<div className="relative w-full h-[240px] bg-black">
+							{/* 隐藏 video，仅用于采集数据 */}
 							<video
 								ref={remoteVideoRef}
 								autoPlay
 								playsInline
+								className="hidden absolute top-0 left-0 w-full h-full"
+							/>
+							{/* 展示画布效果 */}
+							<canvas
+								ref={remoteCanvasRef}
+								width={320}
+								height={240}
 								className="w-full h-full object-cover"
 							/>
 							{!remoteStream && (

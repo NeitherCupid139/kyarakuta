@@ -197,6 +197,9 @@ export default function Window98({
 	};
 	// 拖拽调整大小，支持四边和四角
 	const onResizeMouseDown = (edge: string) => (e: React.MouseEvent) => {
+		// 播放点击音效
+		playClickSound();
+
 		setResizing({
 			edge,
 			startX: e.clientX,
@@ -334,6 +337,8 @@ export default function Window98({
 					cursor: "ns-resize",
 					width: 16,
 					height: 8,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 			{
@@ -345,6 +350,8 @@ export default function Window98({
 					cursor: "ns-resize",
 					width: 16,
 					height: 8,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 			{
@@ -356,6 +363,8 @@ export default function Window98({
 					cursor: "ew-resize",
 					width: 8,
 					height: 16,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 			{
@@ -367,6 +376,8 @@ export default function Window98({
 					cursor: "ew-resize",
 					width: 8,
 					height: 16,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 			{
@@ -377,6 +388,8 @@ export default function Window98({
 					cursor: "nesw-resize",
 					width: 12,
 					height: 12,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 			{
@@ -387,6 +400,8 @@ export default function Window98({
 					cursor: "nwse-resize",
 					width: 12,
 					height: 12,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 			{
@@ -397,6 +412,8 @@ export default function Window98({
 					cursor: "nwse-resize",
 					width: 12,
 					height: 12,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 			{
@@ -407,6 +424,8 @@ export default function Window98({
 					cursor: "nesw-resize",
 					width: 12,
 					height: 12,
+					backgroundColor: "rgba(0, 0, 0, 0.1)",
+					borderRadius: "4px",
 				},
 			},
 		];
@@ -414,11 +433,12 @@ export default function Window98({
 			<div
 				key={h.edge}
 				onMouseDown={onResizeMouseDown(h.edge)}
+				className="resize-handle"
 				style={{
 					position: "absolute",
 					zIndex: 10,
-					background: "transparent",
 					...h.style,
+					transition: "background-color 0.2s",
 				}}
 			/>
 		));
@@ -441,6 +461,10 @@ export default function Window98({
 				maxWidth: maximized ? "none" : maxWidth,
 				maxHeight: maximized ? "none" : maxHeight,
 				boxSizing: "border-box",
+				// 添加边框，使窗口边界更加明显
+				border: "1px solid #000080",
+				// 添加阴影效果，增强立体感
+				boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.2)",
 			}}
 			onClick={handleWindowClick}
 		>
@@ -507,6 +531,24 @@ export default function Window98({
 			)}
 			{/* 八向缩放拖拽点 */}
 			{renderResizeHandles()}
+
+			{/* 右下角调整大小指示器 */}
+			{!maximized && !minimized && (
+				<div
+					style={{
+						position: "absolute",
+						bottom: 2,
+						right: 2,
+						width: 12,
+						height: 12,
+						backgroundImage:
+							'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path d="M0 12L12 12L12 0" stroke="%23000080" stroke-width="1" fill="none"/></svg>\')',
+						backgroundRepeat: "no-repeat",
+						backgroundSize: "contain",
+						pointerEvents: "none",
+					}}
+				/>
+			)}
 		</div>
 	);
 }

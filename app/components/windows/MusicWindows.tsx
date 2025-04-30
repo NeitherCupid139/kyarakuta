@@ -41,35 +41,79 @@ export default function MusicWindows() {
 	// 音频元素引用
 	const audioRef = useRef<HTMLAudioElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	// 添加 Wave 实例引用
+	const waveInstanceRef = useRef<Wave | null>(null);
 
 	// 首次加载时设置默认音乐和初始化波形动画
 	useEffect(() => {
 		if (musicList.length > 0) {
 			setCurrentMusic(musicList[0]);
 		}
-
-		// 初始化波形动画
-		if (audioRef.current && canvasRef.current) {
-			const wave = new Wave(audioRef.current, canvasRef.current);
-
-			// 添加波形动画
-			wave.addAnimation(
-				new wave.animations.Wave({
-					lineWidth: 2,
-					lineColor: "rgb(0, 255, 255)",
-					count: 30,
-				})
-			);
-
-			wave.addAnimation(
-				new wave.animations.Square({
-					count: 20,
-					diameter: 50,
-					lineColor: "rgba(255, 255, 255, 0.5)",
-				})
-			);
-		}
 	}, []);
+
+	// 初始化波形动画
+	useEffect(() => {
+		// 清理之前的 Wave 实例
+		if (waveInstanceRef.current) {
+			// 由于 Wave 没有 destroy 方法，我们需要通过断开音频连接来清理
+			// 重新创建音频元素来断开连接
+			if (audioRef.current) {
+				const oldAudio = audioRef.current;
+				const newAudio = new Audio(oldAudio.src);
+				newAudio.currentTime = oldAudio.currentTime;
+				newAudio.volume = oldAudio.volume;
+				newAudio.muted = oldAudio.muted;
+				oldAudio.parentNode?.replaceChild(newAudio, oldAudio);
+				audioRef.current = newAudio;
+			}
+			waveInstanceRef.current = null;
+		}
+
+		// 初始化新的 Wave 实例
+		if (audioRef.current && canvasRef.current) {
+			try {
+				const wave = new Wave(audioRef.current, canvasRef.current);
+				waveInstanceRef.current = wave;
+
+				// 添加波形动画
+				wave.addAnimation(
+					new wave.animations.Wave({
+						lineWidth: 2,
+						lineColor: "rgb(0, 255, 255)",
+						count: 30,
+					})
+				);
+
+				wave.addAnimation(
+					new wave.animations.Square({
+						count: 20,
+						diameter: 50,
+						lineColor: "rgba(255, 255, 255, 0.5)",
+					})
+				);
+			} catch (error) {
+				console.error("初始化波形动画失败:", error);
+			}
+		}
+
+		// 组件卸载时清理资源
+		return () => {
+			if (waveInstanceRef.current) {
+				// 由于 Wave 没有 destroy 方法，我们需要通过断开音频连接来清理
+				// 重新创建音频元素来断开连接
+				if (audioRef.current) {
+					const oldAudio = audioRef.current;
+					const newAudio = new Audio(oldAudio.src);
+					newAudio.currentTime = oldAudio.currentTime;
+					newAudio.volume = oldAudio.volume;
+					newAudio.muted = oldAudio.muted;
+					oldAudio.parentNode?.replaceChild(newAudio, oldAudio);
+					audioRef.current = newAudio;
+				}
+				waveInstanceRef.current = null;
+			}
+		};
+	}, [currentMusic]); // 当当前音乐改变时重新初始化
 
 	// 播放或暂停音乐
 	const togglePlay = () => {
@@ -321,111 +365,89 @@ export default function MusicWindows() {
 				{/* 播放控制区 */}
 				<div className="controls" style={{ marginTop: "8px" }}>
 					{/* 播放控制区 */}
+					<div className="field-row" style={{ justifyContent: "center" }}>
+						<button
+							className="button"
+							onClick={playPrevious}
+							style={{ padding: "4px" }}
+						>
+							<img
+								src="/icons/previous.png"
+								alt="上一首"
+								width={16}
+								height={16}
+							/>
+						</button>
+						<button
+							className="button"
+							onClick={togglePlay}
+							style={{ padding: "4px", margin: "0 8px" }}
+						>
+							{isPlaying ? (
+								<img src="/icons/pause.png" alt="暂停" width={16} height={16} />
+							) : (
+								<img src="/icons/play.png" alt="播放" width={16} height={16} />
+							)}
+						</button>
+						<button
+							className="button"
+							onClick={playNext}
+							style={{ padding: "4px" }}
+						>
+							<img src="/icons/next.png" alt="下一首" width={16} height={16} />
+						</button>
+					</div>
+
+					{/* 播放模式控制 */}
 					<div
-						className="flex flex-row flex-wrap gap-3 items-center justify-center"
-						style={{ alignItems: "center", justifyContent: "center" }}
+						className="field-row"
+						style={{ justifyContent: "center", marginTop: "8px" }}
 					>
-						{/* 播放模式 */}
-						<div
-							className="flex flex-col items-center"
-							style={{ minWidth: 56 }}
+						<button
+							className="button"
+							onClick={toggleRepeat}
+							style={{
+								padding: "4px",
+								backgroundColor: isRepeat ? "#def" : "transparent",
+							}}
 						>
-							<button
-								className="button"
-								onClick={toggleRepeat}
-								style={{ color: isRepeat ? "blue" : "" }}
-							>
-								<img src="/icons/loop.png" alt="循环" width={16} height={16} />
-							</button>
-							<span style={{ fontSize: 12 }}>循环</span>
-						</div>
+							<img
+								src="/icons/repeat.png"
+								alt="重复播放"
+								width={16}
+								height={16}
+							/>
+						</button>
+						<button
+							className="button"
+							onClick={toggleShuffle}
+							style={{
+								padding: "4px",
+								marginLeft: "8px",
+								backgroundColor: isShuffle ? "#def" : "transparent",
+							}}
+						>
+							<img
+								src="/icons/shuffle.png"
+								alt="随机播放"
+								width={16}
+								height={16}
+							/>
+						</button>
+					</div>
 
-						{/* 上一首按钮 */}
-						<div
-							className="flex flex-col items-center"
-							style={{ minWidth: 56 }}
-						>
-							<button className="button" onClick={playPrevious}>
-								<img
-									src="/icons/previous.png"
-									alt="上一首"
-									width={16}
-									height={16}
-								/>
-							</button>
-							<span style={{ fontSize: 12 }}>上一首</span>
-						</div>
-
-						{/* 播放/暂停按钮 */}
-						<div
-							className="flex flex-col items-center"
-							style={{ minWidth: 56 }}
-						>
-							<button className="button" onClick={togglePlay}>
-								{isPlaying ? (
-									<img
-										src="/icons/pause.png"
-										alt="暂停"
-										width={16}
-										height={16}
-									/>
-								) : (
-									<img
-										src="/icons/play.png"
-										alt="播放"
-										width={16}
-										height={16}
-									/>
-								)}
-							</button>
-							<span style={{ fontSize: 12 }}>
-								{isPlaying ? "暂停" : "播放"}
-							</span>
-						</div>
-
-						{/* 下一首按钮 */}
-						<div
-							className="flex flex-col items-center"
-							style={{ minWidth: 56 }}
-						>
-							<button className="button" onClick={playNext}>
-								<img
-									src="/icons/next.png"
-									alt="下一首"
-									width={16}
-									height={16}
-								/>
-							</button>
-							<span style={{ fontSize: 12 }}>下一首</span>
-						</div>
-
-						{/* 随机播放 */}
-						<div
-							className="flex flex-col items-center"
-							style={{ minWidth: 56 }}
-						>
-							<button
-								className="button"
-								onClick={toggleShuffle}
-								style={{ color: isShuffle ? "blue" : "" }}
-							>
-								<img
-									src="/icons/shuffle.png"
-									alt="随机"
-									width={16}
-									height={16}
-								/>
-							</button>
-							<span style={{ fontSize: 12 }}>随机</span>
-						</div>
-
-						{/* 音量控制 */}
-						<div
-							className="flex flex-col items-center"
-							style={{ minWidth: 56 }}
-						>
+					{/* 音量控制 */}
+					<div
+						className="field-row"
+						style={{ justifyContent: "center", marginTop: "8px" }}
+					>
+						<div style={{ margin: "0 4px" }}>
 							<div className="flex flex-row gap-1 items-center">
-								<button className="button" onClick={volumeDown}>
+								<button
+									className="button"
+									onClick={volumeDown}
+									style={{ padding: "4px" }}
+								>
 									<img
 										src="/icons/quieter.png"
 										alt="音量-"
@@ -433,24 +455,46 @@ export default function MusicWindows() {
 										height={16}
 									/>
 								</button>
-								<button className="button" onClick={toggleMute}>
+								<button
+									className="button"
+									onClick={toggleMute}
+									style={{
+										display: "flex",
+										flexDirection: "column",
+										alignItems: "center",
+										padding: "4px",
+										minWidth: "40px",
+									}}
+								>
 									{isMuted ? (
-										<img
-											src="/icons/cancelmute.png"
-											alt="取消静音"
-											width={16}
-											height={16}
-										/>
+										<>
+											<img
+												src="/icons/cancelmute.png"
+												alt="取消静音"
+												width={16}
+												height={16}
+											/>
+											<span style={{ fontSize: 10, marginTop: 2 }}>
+												取消静音
+											</span>
+										</>
 									) : (
-										<img
-											src="/icons/mute.png"
-											alt="静音"
-											width={16}
-											height={16}
-										/>
+										<>
+											<img
+												src="/icons/mute.png"
+												alt="静音"
+												width={16}
+												height={16}
+											/>
+											<span style={{ fontSize: 10, marginTop: 2 }}>静音</span>
+										</>
 									)}
 								</button>
-								<button className="button" onClick={volumeUp}>
+								<button
+									className="button"
+									onClick={volumeUp}
+									style={{ padding: "4px" }}
+								>
 									<img
 										src="/icons/louder.png"
 										alt="音量+"
@@ -459,7 +503,6 @@ export default function MusicWindows() {
 									/>
 								</button>
 							</div>
-							<span style={{ fontSize: 12 }}>音量</span>
 						</div>
 					</div>
 				</div>
@@ -497,21 +540,69 @@ export default function MusicWindows() {
 							overflowY: "auto",
 						}}
 					>
-						{musicList.map((music) => (
-							<div
-								key={music.id}
-								className="music-item"
-								style={{
-									padding: "4px 8px",
-									cursor: "pointer",
-									backgroundColor:
-										currentMusic?.id === music.id ? "#def" : "transparent",
-								}}
-								onDoubleClick={() => playMusic(music)}
+						<div className="sunken-panel" style={{ width: "100%" }}>
+							<table
+								className="music-table"
+								style={{ width: "100%", borderCollapse: "collapse" }}
 							>
-								{music.title}
-							</div>
-						))}
+								<thead>
+									<tr>
+										<th
+											style={{
+												textAlign: "left",
+												padding: "4px 8px",
+												borderBottom: "1px solid #ddd",
+											}}
+										>
+											<img
+												src="/icons/music.png"
+												alt="音乐"
+												width={16}
+												height={16}
+												style={{ marginRight: "4px" }}
+											/>
+											标题
+										</th>
+										<th
+											style={{
+												textAlign: "left",
+												padding: "4px 8px",
+												borderBottom: "1px solid #ddd",
+											}}
+										>
+											<img
+												src="/icons/myfriend.png"
+												alt="作者"
+												width={16}
+												height={16}
+												style={{ marginRight: "4px" }}
+											/>
+											作者
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{musicList.map((music) => (
+										<tr
+											key={music.id}
+											className="music-item"
+											style={{
+												cursor: "pointer",
+												backgroundColor:
+													currentMusic?.id === music.id
+														? "#def"
+														: "transparent",
+												borderBottom: "1px solid #eee",
+											}}
+											onDoubleClick={() => playMusic(music)}
+										>
+											<td style={{ padding: "6px 8px" }}>{music.title}</td>
+											<td style={{ padding: "6px 8px" }}>{music.author}</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
 			</div>

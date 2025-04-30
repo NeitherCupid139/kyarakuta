@@ -84,3 +84,8 @@ body {
 .desktop {
 	background-color: teal;
 }
+
+/* 窗口调整大小手柄样式 */
+.resize-handle:hover {
+	background-color: rgba(0, 0, 0, 0.2) !important;
+}

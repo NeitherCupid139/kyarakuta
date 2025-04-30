@@ -6,6 +6,44 @@ import supabase from "@/app/lib/supabase";
  */
 
 /**
+ * 确保存储桶存在
+ * @param bucket 存储桶名称
+ */
+async function ensureBucketExists(bucket: string) {
+	try {
+		// 检查存储桶是否存在
+		const { data: buckets, error: bucketsError } =
+			await supabase.storage.listBuckets();
+		if (bucketsError) {
+			console.error("获取存储桶列表失败:", bucketsError);
+			throw bucketsError;
+		}
+
+		const bucketExists = buckets.some((b) => b.name === bucket);
+		if (!bucketExists) {
+			// 创建存储桶
+			const { error: createError } = await supabase.storage.createBucket(
+				bucket,
+				{
+					public: true,
+					fileSizeLimit: 5242880, // 5MB
+				}
+			);
+
+			if (createError) {
+				console.error("创建存储桶失败:", createError);
+				throw createError;
+			}
+
+			console.log(`存储桶 "${bucket}" 创建成功`);
+		}
+	} catch (error) {
+		console.error("确保存储桶存在时出错:", error);
+		throw error;
+	}
+}
+
+/**
  * 上传图片到 Supabase Storage
  * @param file 要上传的文件
  * @param bucket 存储桶名称，默认为 'kyarakuta'
@@ -24,19 +62,23 @@ export async function uploadImage(
 			throw new Error("Supabase 客户端未初始化");
 		}
 
-		// 检查存储桶是否存在
-		const { data: buckets, error: bucketsError } =
-			await supabase.storage.listBuckets();
-		if (bucketsError) {
-			console.error("获取存储桶列表失败:", bucketsError);
-			throw bucketsError;
+		// 确保用户已登录
+		const {
+			data: { session },
+			error: sessionError,
+		} = await supabase.auth.getSession();
+		if (sessionError) {
+			console.error("获取会话失败:", sessionError);
+			throw sessionError;
 		}
 
-		const bucketExists = buckets.some((b) => b.name === bucket);
-		if (!bucketExists) {
-			console.error(`存储桶 "${bucket}" 不存在`);
-			throw new Error(`存储桶 "${bucket}" 不存在`);
+		if (!session) {
+			console.error("用户未登录");
+			throw new Error("用户未登录，请先登录");
 		}
+
+		// 确保存储桶存在
+		await ensureBucketExists(bucket);
 
 		// 生成唯一文件名
 		const fileExt = file.name.split(".").pop();
